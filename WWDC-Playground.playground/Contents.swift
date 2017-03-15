@@ -1,5 +1,5 @@
 //: Playground - noun: a place where people can play
-//  Created by Kirill Averyanov
+//  Created by Kirill Averyanov // github.com/kirillzzy
 
 
 import UIKit
@@ -14,17 +14,32 @@ class ViewController: UIViewController {
   var brushWidth: CGFloat = 10.0
   var opacity: CGFloat = 1.0
   var swiped = false
-
+  var colorPicker: ChromaColorPicker!
   var mainImageView: UIImageView!
   var tempImageView: UIImageView!
+  var showColorPickerButton: UIButton!
 
   override func viewDidLoad() {
     super.viewDidLoad()
     self.view.backgroundColor = .white
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
+    showColorPickerButton = UIButton(frame: CGRect(x: 50, y: 0, width: 50, height: 50))
+    showColorPickerButton.setTitle("Hello", for: .normal)
     self.view.addSubview(mainImageView!)
     self.view.addSubview(tempImageView!)
+    self.view.addSubview(showColorPickerButton)
+    addColorPicker()
+  }
+
+  func addColorPicker() {
+    colorPicker = ChromaColorPicker(frame: CGRect(x: 50, y: 500, width: 300, height: 300))
+    colorPicker.delegate = self
+    colorPicker.padding = 10
+    colorPicker.stroke = 3
+    colorPicker.currentAngle = Float(M_PI)
+    colorPicker.hexLabel.textColor = UIColor.white
+    self.view.addSubview(colorPicker)
   }
 
   override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -74,6 +89,23 @@ class ViewController: UIViewController {
     tempImageView.image = UIGraphicsGetImageFromCurrentImageContext()
     tempImageView.alpha = opacity
     UIGraphicsEndImageContext()
+  }
+}
+
+// MARK: - ColorPickerDelegate
+extension ViewController: ChromaColorPickerDelegate{
+  func colorPickerDidChooseColor(_ colorPicker: ChromaColorPicker, color: UIColor) {
+    color.getRed(&red, green: &green, blue: &blue, alpha: nil)
+
+    //Perform zesty animation
+    UIView.animate(withDuration: 0.2,
+                   animations: {
+                    self.view.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
+    }, completion: { (done) in
+      UIView.animate(withDuration: 0.2, animations: {
+        self.view.transform = CGAffineTransform.identity
+      })
+    })
   }
 }
 
