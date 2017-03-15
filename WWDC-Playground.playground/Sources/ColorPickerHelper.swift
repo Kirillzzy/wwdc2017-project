@@ -76,7 +76,6 @@ public protocol ChromaColorPickerDelegate {
 }
 
 public class ChromaColorPicker: UIControl {
-  open var hexLabel: UILabel!
   open var shadeSlider: ChromaShadeSlider!
   var handleView: ChromaHandle!
   open var handleLine: CAShapeLayer!
@@ -118,18 +117,11 @@ public class ChromaColorPicker: UIControl {
     handleLine = CAShapeLayer()
     handleLine.lineWidth = 2
     handleLine.strokeColor = UIColor.white.withAlphaComponent(0.2).cgColor
-    hexLabel = UILabel()
-    self.layoutHexLabel()
-    hexLabel.layer.cornerRadius = 2
-    hexLabel.adjustsFontSizeToFitWidth = true
-    hexLabel.textAlignment = .center
-    hexLabel.textColor = UIColor(red: 51/255.0, green:51/255.0, blue: 51/255.0, alpha: 0.65)
     shadeSlider = ChromaShadeSlider()
     shadeSlider.delegate = self
     self.layoutShadeSlider()
     self.layer.addSublayer(handleLine)
     self.addSubview(shadeSlider)
-    self.addSubview(hexLabel)
     self.addSubview(handleView)
     self.addSubview(addButton)
   }
@@ -141,7 +133,6 @@ public class ChromaColorPicker: UIControl {
     handleView.color = currentColor
     addButton.color = currentColor
     shadeSlider.primaryColor = currentColor
-    self.updateHexLabel()
   }
 
   func adjustToColor(_ color: UIColor){
@@ -167,7 +158,6 @@ public class ChromaColorPicker: UIControl {
     addButton.color = shadeSlider.currentColor
     self.layoutHandle()
     self.layoutHandleLine()
-    self.updateHexLabel()
   }
 
   override public func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?){
@@ -219,7 +209,6 @@ public class ChromaColorPicker: UIControl {
     if shadeSlider.currentValue == 0 {
       self.updateCurrentColor(shadeSlider.currentColor)
     }
-    self.updateHexLabel()
   }
 
   func addButtonPressed(_ sender: ChromaAddButton){
@@ -295,7 +284,6 @@ public class ChromaColorPicker: UIControl {
 
     self.layoutShadeSlider()
     self.layoutHandleLine()
-    self.layoutHexLabel()
   }
 
   func layoutAddButton(){
@@ -316,12 +304,6 @@ public class ChromaColorPicker: UIControl {
     handleLine.path = linePath.cgPath
   }
 
-  func layoutHexLabel(){
-    hexLabel.frame = CGRect(x: 0, y: 0, width: addButton.bounds.width*1.5, height: addButton.bounds.height/3)
-    hexLabel.center = CGPoint(x: self.bounds.midX, y: (addButton.frame.origin.y + (padding + handleView.frame.height/2 + stroke/2))/1.75)
-    hexLabel.font = UIFont(name: "Menlo-Regular", size: hexLabel.bounds.height)
-  }
-
   func layoutShadeSlider(){
     /* Calculate proper length for slider */
     let centerPoint = CGPoint(x: bounds.midX, y: bounds.midY)
@@ -336,10 +318,6 @@ public class ChromaColorPicker: UIControl {
     shadeSlider.frame = CGRect(x: bounds.midX - sliderSize.width/2, y: pointLeft.y - sliderSize.height/2, width: sliderSize.width, height: sliderSize.height)
     shadeSlider.handleCenterX = shadeSlider.bounds.width/2
     shadeSlider.layoutLayerFrames()
-  }
-
-  func updateHexLabel(){
-    hexLabel.text = "#" + currentColor.hexCode
   }
 
   func updateCurrentColor(_ color: UIColor){
@@ -382,7 +360,6 @@ public class ChromaColorPicker: UIControl {
 extension ChromaColorPicker: ChromaShadeSliderDelegate{
   open func shadeSliderChoseColor(_ slider: ChromaShadeSlider, color: UIColor) {
     self.updateCurrentColor(color)
-    self.updateHexLabel()
   }
 }
 
@@ -595,54 +572,6 @@ open class ChromaShadeSlider: UIControl {
   }
   private func fittedValueInBounds(_ value: CGFloat) -> CGFloat {
     return min(max(value, trackLayer.frame.minX), trackLayer.frame.maxX)
-  }
-
-}
-
-
-public extension UIColor{
-  public var hexCode: String {
-    get{
-      let colorComponents = self.cgColor.components
-      return String(format: "%02x%02x%02x", Int(colorComponents![0]*255.0), Int(colorComponents![1]*255.0),Int(colorComponents![2]*255.0)).uppercased()
-    }
-  }
-
-  public func lighterColor(_ amount: CGFloat) -> UIColor{
-    return UIColor.blendColors(color: self, destinationColor: UIColor.white, amount: amount)
-  }
-
-  public func darkerColor(_ amount: CGFloat) -> UIColor{
-    return UIColor.blendColors(color: self, destinationColor: UIColor.black, amount: amount)
-  }
-
-  public static func blendColors(color: UIColor, destinationColor: UIColor, amount : CGFloat) -> UIColor{
-    var amountToBlend = amount;
-    if amountToBlend > 1{
-      amountToBlend = 1.0
-    }
-    else if amountToBlend < 0{
-      amountToBlend = 0
-    }
-    var r,g,b, alpha : CGFloat
-    r = 0
-    g = 0
-    b = 0
-    alpha = 0
-    color.getRed(&r, green: &g, blue: &b, alpha: &alpha)
-    var dest_r, dest_g, dest_b, dest_alpha : CGFloat
-    dest_r = 0
-    dest_g = 0
-    dest_b = 0
-    dest_alpha = 0
-    destinationColor.getRed(&dest_r, green: &dest_g, blue: &dest_b, alpha: &dest_alpha)
-
-    r = amountToBlend * (dest_r * 255) + (1 - amountToBlend) * (r * 255)
-    g = amountToBlend * (dest_g * 255) + (1 - amountToBlend) * (g * 255)
-    b = amountToBlend * (dest_b * 255) + (1 - amountToBlend) * (b * 255)
-    alpha = fabs(alpha / dest_alpha)
-
-    return UIColor(red: r/255.0, green: g/255.0, blue: b/255.0, alpha: alpha)
   }
 
 }

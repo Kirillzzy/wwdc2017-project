@@ -36,7 +36,6 @@ open class MainViewController: UIViewController {
     colorPicker.padding = 10
     colorPicker.stroke = 3
     colorPicker.currentAngle = Float(M_PI)
-    colorPicker.hexLabel.textColor = UIColor.white
     self.view.addSubview(colorPicker)
   }
 
