@@ -5,7 +5,6 @@
 import UIKit
 import PlaygroundSupport
 
-//let viewController = MainViewController()
-let viewController = StarterViewController()
+let viewController = MainViewController()
 PlaygroundPage.current.needsIndefiniteExecution = true
 PlaygroundPage.current.liveView = viewController.view

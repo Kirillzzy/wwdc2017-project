@@ -3,7 +3,7 @@
 
 import UIKit
 
-class ChromaAddButton: UIButton {
+open class ChromaAddButton: UIButton {
   var color = UIColor.gray{
     didSet{
       if let layer = circleLayer{
@@ -12,7 +12,7 @@ class ChromaAddButton: UIButton {
       }
     }
   }
-  override var frame: CGRect{
+  override open var frame: CGRect{
     didSet{
       self.layoutCircleLayer()
       self.layoutPlusIconLayer()
