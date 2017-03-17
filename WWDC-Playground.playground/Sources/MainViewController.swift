@@ -16,6 +16,18 @@ open class MainViewController: UIViewController {
   var mainImageView: UIImageView!
   var tempImageView: UIImageView!
   var sizeOfColorPicker: CGFloat = 200.0
+  var penButton: UIButton! {
+    didSet {
+      penButton.setImage(UIImage.init(named: "pen.png"), for: .normal)
+      penButton.addTarget(self, action: #selector(penButtonPressed(_:)), for: .touchUpInside)
+    }
+  }
+  var markerButton: UIButton! {
+    didSet {
+      markerButton.setImage(UIImage.init(named: "marker.png"), for: .normal)
+      markerButton.addTarget(self, action: #selector(markerButtonPressed(_:)), for: .touchUpInside)
+    }
+  }
 
 
   override open func viewDidLoad() {
@@ -23,18 +35,30 @@ open class MainViewController: UIViewController {
     self.view.backgroundColor = .white
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
+    penButton = UIButton(frame: CGRect(x: 300, y: 30, width: 100, height: 200))
+    markerButton = UIButton(frame: CGRect(x: 400, y: 30, width: 100, height: 200))
     self.view.addSubview(mainImageView!)
     self.view.addSubview(tempImageView!)
+    self.view.addSubview(penButton)
+    self.view.addSubview(markerButton)
     addColorPicker()
   }
 
   func addColorPicker() {
-    colorPicker = ChromaColorPicker(frame: CGRect(x: 30, y: 30, width: 150, height: 150))
+    colorPicker = ChromaColorPicker(frame: CGRect(x: 30, y: 30, width: sizeOfColorPicker, height: sizeOfColorPicker))
     colorPicker.delegate = self
     colorPicker.padding = 10
     colorPicker.stroke = 3
     colorPicker.currentAngle = Float(M_PI)
     self.view.addSubview(colorPicker)
+  }
+
+  func penButtonPressed(_ sender: UIButton) {
+    brushWidth = 5.0
+  }
+
+  func markerButtonPressed(_ sender: UIButton) {
+    brushWidth = 10.0
   }
 
   override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -91,8 +115,6 @@ open class MainViewController: UIViewController {
 extension MainViewController: ChromaColorPickerDelegate{
   public func colorPickerDidChooseColor(_ colorPicker: ChromaColorPicker, color: UIColor) {
     color.getRed(&red, green: &green, blue: &blue, alpha: nil)
-
-
     //Perform zesty animation
     UIView.animate(withDuration: 0.2,
                    animations: {
