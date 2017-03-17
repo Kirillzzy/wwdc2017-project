@@ -35,8 +35,8 @@ open class MainViewController: UIViewController {
     self.view.backgroundColor = .white
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
-    penButton = UIButton(frame: CGRect(x: 300, y: 30, width: 100, height: 200))
-    markerButton = UIButton(frame: CGRect(x: 400, y: 30, width: 100, height: 200))
+    penButton = UIButton(frame: CGRect(x: 250, y: 30, width: 100, height: 200))
+    markerButton = UIButton(frame: CGRect(x: 300, y: 30, width: 100, height: 200))
     self.view.addSubview(mainImageView!)
     self.view.addSubview(tempImageView!)
     self.view.addSubview(penButton)
