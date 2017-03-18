@@ -16,6 +16,7 @@ open class MainViewController: UIViewController {
   var mainImageView: UIImageView!
   var tempImageView: UIImageView!
   var sizeOfColorPicker: CGFloat = 200.0
+  var savedImageViews = [UIImageView]()
   var penButton: UIButton! {
     didSet {
       penButton.setImage(UIImage.init(named: "pen.png"), for: .normal)
@@ -28,19 +29,31 @@ open class MainViewController: UIViewController {
       markerButton.addTarget(self, action: #selector(markerButtonPressed(_:)), for: .touchUpInside)
     }
   }
-
+  var animateButton: UIButton! {
+    didSet {
+      animateButton.backgroundColor = .blue
+      animateButton.setTitle("Animate", for: .normal)
+      animateButton.addTarget(self, action: #selector(animateButtonPressed(_:)), for: .touchUpInside)
+    }
+  }
 
   override open func viewDidLoad() {
     super.viewDidLoad()
+    registerComponents()
+  }
+
+  func registerComponents() {
     self.view.backgroundColor = .white
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
     penButton = UIButton(frame: CGRect(x: 250, y: 30, width: 100, height: 200))
-    markerButton = UIButton(frame: CGRect(x: 300, y: 30, width: 100, height: 200))
+    markerButton = UIButton(frame: CGRect(x: 320, y: 30, width: 100, height: 200))
+    animateButton = UIButton(frame: CGRect(x: 400, y: 30, width: 100, height: 50))
     self.view.addSubview(mainImageView!)
     self.view.addSubview(tempImageView!)
     self.view.addSubview(penButton)
     self.view.addSubview(markerButton)
+    self.view.addSubview(animateButton)
     addColorPicker()
   }
 
@@ -59,6 +72,18 @@ open class MainViewController: UIViewController {
 
   func markerButtonPressed(_ sender: UIButton) {
     brushWidth = 10.0
+  }
+
+  func animateButtonPressed(_ sender: UIButton) {
+    mainImageView.image = nil
+    guard savedImageViews.count > 0 else { return }
+    for imageView in savedImageViews {
+      imageView.frame = CGRect(origin: view.center, size: CGSize(width: 100, height: 100))
+      self.view.addSubview(imageView)
+      UIView.animate(withDuration: 5, animations: {
+        imageView.center.y += 1000
+      })
+    }
   }
 
   override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -88,7 +113,9 @@ open class MainViewController: UIViewController {
     self.tempImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height), blendMode: CGBlendMode.normal, alpha: self.opacity)
     self.mainImageView.image = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
-
+    if let image = tempImageView.image{
+      savedImageViews.append(UIImageView(image: image))
+    }
     self.tempImageView.image = nil
   }
 
