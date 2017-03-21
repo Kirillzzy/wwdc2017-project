@@ -5,6 +5,25 @@ import UIKit
 
 open class MainViewController: UIViewController {
 
+  struct corners {
+    var left: CGFloat
+    var right: CGFloat
+    var up: CGFloat
+    var down: CGFloat
+    init(point: CGPoint) {
+      left = point.x
+      right = point.x
+      down = point.y
+      up = point.y
+    }
+    init() {
+      left = 0
+      right = 0
+      down = 0
+      up = 0
+    }
+  }
+
   var lastPoint = CGPoint.zero
   var red: CGFloat = 0.0
   var green: CGFloat = 0.999999916517394
@@ -17,6 +36,8 @@ open class MainViewController: UIViewController {
   var tempImageView: UIImageView!
   var sizeOfColorPicker: CGFloat = 200.0
   var savedImageViews = [UIImageView]()
+  var isAnimate: Bool = false
+  var cornersImage = corners()
   var penButton: UIButton! {
     didSet {
       penButton.setImage(UIImage.init(named: "pen.png"), for: .normal)
@@ -36,6 +57,13 @@ open class MainViewController: UIViewController {
       animateButton.addTarget(self, action: #selector(animateButtonPressed(_:)), for: .touchUpInside)
     }
   }
+  var beginAnimationButton: UIButton! {
+    didSet {
+      beginAnimationButton.backgroundColor = .blue
+      beginAnimationButton.setTitle("Begin Animate", for: .normal)
+      beginAnimationButton.addTarget(self, action: #selector(beginAnimationButtonPressed(_:)), for: .touchUpInside)
+    }
+  }
 
   override open func viewDidLoad() {
     super.viewDidLoad()
@@ -49,11 +77,13 @@ open class MainViewController: UIViewController {
     penButton = UIButton(frame: CGRect(x: 250, y: 30, width: 100, height: 200))
     markerButton = UIButton(frame: CGRect(x: 320, y: 30, width: 100, height: 200))
     animateButton = UIButton(frame: CGRect(x: 400, y: 30, width: 100, height: 50))
-    self.view.addSubview(mainImageView!)
-    self.view.addSubview(tempImageView!)
-    self.view.addSubview(penButton)
-    self.view.addSubview(markerButton)
-    self.view.addSubview(animateButton)
+    beginAnimationButton = UIButton(frame: CGRect(x: 550, y: 30, width: 150, height: 50))
+    view.addSubview(mainImageView!)
+    view.addSubview(tempImageView!)
+    view.addSubview(penButton)
+    view.addSubview(markerButton)
+    view.addSubview(animateButton)
+    view.addSubview(beginAnimationButton)
     addColorPicker()
   }
 
@@ -63,7 +93,7 @@ open class MainViewController: UIViewController {
     colorPicker.padding = 10
     colorPicker.stroke = 3
     colorPicker.currentAngle = Float(M_PI)
-    self.view.addSubview(colorPicker)
+    view.addSubview(colorPicker)
   }
 
   func penButtonPressed(_ sender: UIButton) {
@@ -76,35 +106,54 @@ open class MainViewController: UIViewController {
 
   func animateButtonPressed(_ sender: UIButton) {
     mainImageView.image = nil
+    isAnimate = !isAnimate
+    print(isAnimate)
     guard savedImageViews.count > 0 else { return }
     for imageView in savedImageViews {
-      imageView.frame = CGRect(origin: view.center, size: CGSize(width: 100, height: 100))
-      self.view.addSubview(imageView)
-      UIView.animate(withDuration: 5, animations: {
-        imageView.center.y += 1000
-      })
+      imageView.backgroundColor = .black
+      isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
   }
 
+  func beginAnimationButtonPressed(_ sender: UIButton) {
+
+  }
+
+  func checkCorners(point: CGPoint) {
+    cornersImage.left = point.x < cornersImage.left ? point.x : cornersImage.left
+    cornersImage.right = point.x > cornersImage.right ? point.x : cornersImage.right
+    cornersImage.up = point.y > cornersImage.up ? point.y : cornersImage.up
+    cornersImage.down = point.y < cornersImage.down ? point.y : cornersImage.down
+  }
+
   override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+    super.touchesBegan(touches, with: event)
+    if isAnimate { return }
     self.swiped = false
     if let touch = touches.first {
       self.lastPoint = touch.location(in: self.view)
+      cornersImage = corners(point: lastPoint)
     }
   }
 
   override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
+    super.touchesMoved(touches, with: event)
+    if isAnimate { return }
     self.swiped = true
     if let touch = touches.first {
       let currentPoint = touch.location(in: self.view)
       self.drawLineFrom(fromPoint: self.lastPoint, toPoint: currentPoint)
       self.lastPoint = currentPoint
+      checkCorners(point: lastPoint)
     }
   }
 
   override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
+    super.touchesEnded(touches, with: event)
+    if isAnimate { return }
     if !self.swiped {
       self.drawLineFrom(fromPoint: self.lastPoint, toPoint: self.lastPoint)
+      checkCorners(point: lastPoint)
     }
 
     // Merge tempImageView into mainImageView
@@ -114,9 +163,22 @@ open class MainViewController: UIViewController {
     self.mainImageView.image = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
     if let image = tempImageView.image{
-      savedImageViews.append(UIImageView(image: image))
+      let imageView = UIImageView(image: image)
+      imageView.isUserInteractionEnabled = true
+      imageView.image = imageView.image?.cropToBounds(posX: cornersImage.left,
+                                    posY: cornersImage.down,
+                                    width: cornersImage.right - cornersImage.left,
+                                    height: cornersImage.up - cornersImage.down)
+      imageView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(imageDragged(gesture:))))
+      savedImageViews.append(imageView)
     }
     self.tempImageView.image = nil
+  }
+
+  func imageDragged(gesture: UIPanGestureRecognizer) {
+    let imageView = gesture.view as! UIImageView
+    let point = gesture.location(in: view)
+    imageView.center = point
   }
 
   func drawLineFrom(fromPoint: CGPoint, toPoint: CGPoint) {
@@ -146,7 +208,7 @@ extension MainViewController: ChromaColorPickerDelegate{
     UIView.animate(withDuration: 0.2,
                    animations: {
                     self.view.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
-    }, completion: { (done) in
+    }, completion: { done in
       UIView.animate(withDuration: 0.2, animations: {
         self.view.transform = CGAffineTransform.identity
       })
