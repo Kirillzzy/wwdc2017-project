@@ -38,6 +38,8 @@ open class MainViewController: UIViewController {
   var savedImageViews = [UIImageView]()
   var isAnimate: Bool = false
   var cornersImage = corners()
+  var pointsAnimation = [CGPoint]()
+
   var penButton: UIButton! {
     didSet {
       penButton.setImage(UIImage.init(named: "pen.png"), for: .normal)
@@ -107,23 +109,18 @@ open class MainViewController: UIViewController {
   func animateButtonPressed(_ sender: UIButton) {
     mainImageView.image = nil
     isAnimate = !isAnimate
-    print(isAnimate)
     guard savedImageViews.count > 0 else { return }
     for imageView in savedImageViews {
-      imageView.backgroundColor = .black
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
   }
 
   func beginAnimationButtonPressed(_ sender: UIButton) {
-
-  }
-
-  func checkCorners(point: CGPoint) {
-    cornersImage.left = point.x < cornersImage.left ? point.x : cornersImage.left
-    cornersImage.right = point.x > cornersImage.right ? point.x : cornersImage.right
-    cornersImage.up = point.y > cornersImage.up ? point.y : cornersImage.up
-    cornersImage.down = point.y < cornersImage.down ? point.y : cornersImage.down
+    // TODO: add time between points
+    for point in pointsAnimation {
+      UIView.animate(withDuration: 0.1, animations: {
+      })
+    }
   }
 
   override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -165,20 +162,38 @@ open class MainViewController: UIViewController {
     if let image = tempImageView.image{
       let imageView = UIImageView(image: image)
       imageView.isUserInteractionEnabled = true
+      let width = cornersImage.right - cornersImage.left
+      let height = cornersImage.up - cornersImage.down
+      imageView.frame.size = CGSize(width: width, height: height)
       imageView.image = imageView.image?.cropToBounds(posX: cornersImage.left,
                                     posY: cornersImage.down,
-                                    width: cornersImage.right - cornersImage.left,
-                                    height: cornersImage.up - cornersImage.down)
+                                    width: width,
+                                    height: height)
       imageView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(imageDragged(gesture:))))
       savedImageViews.append(imageView)
     }
     self.tempImageView.image = nil
   }
 
+
+}
+
+// MARK: - Working with images
+extension MainViewController {
+
+  func checkCorners(point: CGPoint) {
+    let lineWidth: CGFloat = 10 // for line width
+    cornersImage.left = point.x < cornersImage.left ? point.x - lineWidth : cornersImage.left
+    cornersImage.right = point.x > cornersImage.right ? point.x + lineWidth: cornersImage.right
+    cornersImage.down = point.y < cornersImage.down ? point.y - lineWidth: cornersImage.down
+    cornersImage.up = point.y > cornersImage.up ? point.y + lineWidth: cornersImage.up
+  }
+
   func imageDragged(gesture: UIPanGestureRecognizer) {
     let imageView = gesture.view as! UIImageView
     let point = gesture.location(in: view)
     imageView.center = point
+    pointsAnimation.append(point)
   }
 
   func drawLineFrom(fromPoint: CGPoint, toPoint: CGPoint) {
@@ -198,7 +213,9 @@ open class MainViewController: UIViewController {
     self.tempImageView.alpha = self.opacity
     UIGraphicsEndImageContext()
   }
+
 }
+
 
 // MARK: - ColorPickerDelegate
 extension MainViewController: ChromaColorPickerDelegate{
