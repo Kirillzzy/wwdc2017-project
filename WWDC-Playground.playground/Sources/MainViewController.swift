@@ -24,6 +24,17 @@ open class MainViewController: UIViewController {
     }
   }
 
+  struct savePoint {
+    var point: CGPoint
+    var timeBefore: TimeInterval = 0
+    var owner: UIImageView
+    init(point: CGPoint, timeBefore: TimeInterval, owner: UIImageView) {
+      self.point = point
+      self.timeBefore = timeBefore
+      self.owner = owner
+    }
+  }
+
   var lastPoint = CGPoint.zero
   var red: CGFloat = 0.0
   var green: CGFloat = 0.999999916517394
@@ -38,7 +49,7 @@ open class MainViewController: UIViewController {
   var savedImageViews = [UIImageView]()
   var isAnimate: Bool = false
   var cornersImage = corners()
-  var pointsAnimation = [CGPoint]()
+  var pointsAnimation = [savePoint]()
 
   var penButton: UIButton! {
     didSet {
@@ -113,12 +124,19 @@ open class MainViewController: UIViewController {
     for imageView in savedImageViews {
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
+    pointsAnimation.removeAll()
+    pointsAnimation.append(savePoint(point: CGPoint(), timeBefore: Date().timeIntervalSince1970, owner: UIImageView()))
   }
 
   func beginAnimationButtonPressed(_ sender: UIButton) {
-    // TODO: add time between points
-    for point in pointsAnimation {
-      UIView.animate(withDuration: 0.1, animations: {
+    guard pointsAnimation.count > 0 else { return }
+    isAnimate = false
+    print(pointsAnimation)
+    for i in 1..<pointsAnimation.count {
+      let time = pointsAnimation[i].timeBefore - pointsAnimation[i - 1].timeBefore
+      let point = pointsAnimation[i]
+      UIView.animate(withDuration: time, animations: {
+        point.owner.center = point.point
       })
     }
   }
@@ -193,7 +211,9 @@ extension MainViewController {
     let imageView = gesture.view as! UIImageView
     let point = gesture.location(in: view)
     imageView.center = point
-    pointsAnimation.append(point)
+    pointsAnimation.append(savePoint(point: point,
+                                     timeBefore: Date().timeIntervalSince1970,
+                                     owner: imageView))
   }
 
   func drawLineFrom(fromPoint: CGPoint, toPoint: CGPoint) {
