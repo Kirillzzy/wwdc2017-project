@@ -35,6 +35,8 @@ open class MainViewController: UIViewController {
     }
   }
 
+  let timeOfAnimation: TimeInterval = 0.05
+
   var lastPoint = CGPoint.zero
   var red: CGFloat = 0.0
   var green: CGFloat = 0.999999916517394
@@ -50,6 +52,8 @@ open class MainViewController: UIViewController {
   var isAnimate: Bool = false
   var cornersImage = corners()
   var pointsAnimation = [savePoint]()
+  var timer: Timer!
+  var index: Int = 1
 
   var penButton: UIButton! {
     didSet {
@@ -131,14 +135,28 @@ open class MainViewController: UIViewController {
   func beginAnimationButtonPressed(_ sender: UIButton) {
     guard pointsAnimation.count > 0 else { return }
     isAnimate = false
-    print(pointsAnimation)
-    for i in 1..<pointsAnimation.count {
-      let time = pointsAnimation[i].timeBefore - pointsAnimation[i - 1].timeBefore
-      let point = pointsAnimation[i]
-      UIView.animate(withDuration: time, animations: {
-        point.owner.center = point.point
-      })
+    index = 1
+    timer = Timer.scheduledTimer(timeInterval: timeOfAnimation, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
+  }
+
+  func updateTimer() {
+    //    for i in 1..<pointsAnimation.count {
+    let i = index
+    index += 1
+    let time = pointsAnimation[i].timeBefore - pointsAnimation[i - 1].timeBefore
+    let point = pointsAnimation[i]
+    if i == 1 {
+      point.owner.center = point.point
+//      continue
+      return
     }
+    UIView.animate(withDuration: timeOfAnimation * 2, animations: {
+      point.owner.center = point.point
+    })
+    if index >= pointsAnimation.count {
+      timer.invalidate()
+    }
+    //    }
   }
 
   override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -184,9 +202,9 @@ open class MainViewController: UIViewController {
       let height = cornersImage.up - cornersImage.down
       imageView.frame.size = CGSize(width: width, height: height)
       imageView.image = imageView.image?.cropToBounds(posX: cornersImage.left,
-                                    posY: cornersImage.down,
-                                    width: width,
-                                    height: height)
+                                                      posY: cornersImage.down,
+                                                      width: width,
+                                                      height: height)
       imageView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(imageDragged(gesture:))))
       savedImageViews.append(imageView)
     }
