@@ -35,7 +35,7 @@ open class MainViewController: UIViewController {
     }
   }
 
-  let timeOfAnimation: TimeInterval = 0.05
+  let timeOfAnimation: TimeInterval = 0.01
 
   var lastPoint = CGPoint.zero
   var red: CGFloat = 0.0
@@ -51,7 +51,11 @@ open class MainViewController: UIViewController {
   var savedImageViews = [UIImageView]()
   var isAnimate: Bool = false
   var cornersImage = corners()
-  var pointsAnimation = [savePoint]()
+  var pointsAnimation = [savePoint]() {
+    didSet {
+      beginAnimationButton.isEnabled = pointsAnimation.count > 0 ? true : false
+    }
+  }
   var timer: Timer!
   var index: Int = 1
 
@@ -67,17 +71,15 @@ open class MainViewController: UIViewController {
       markerButton.addTarget(self, action: #selector(markerButtonPressed(_:)), for: .touchUpInside)
     }
   }
-  var animateButton: UIButton! {
+  var animateButton: ActionButton! {
     didSet {
-      animateButton.backgroundColor = .blue
-      animateButton.setTitle("Animate", for: .normal)
+      animateButton.setImage(UIImage.init(named: "animateButton.png"), for: .normal)
       animateButton.addTarget(self, action: #selector(animateButtonPressed(_:)), for: .touchUpInside)
     }
   }
-  var beginAnimationButton: UIButton! {
+  var beginAnimationButton: ActionButton! {
     didSet {
-      beginAnimationButton.backgroundColor = .blue
-      beginAnimationButton.setTitle("Begin Animate", for: .normal)
+      beginAnimationButton.setImage(UIImage.init(named: "playIcon.png"), for: .normal)
       beginAnimationButton.addTarget(self, action: #selector(beginAnimationButtonPressed(_:)), for: .touchUpInside)
     }
   }
@@ -93,8 +95,8 @@ open class MainViewController: UIViewController {
     tempImageView = UIImageView(frame: self.view.frame)
     penButton = UIButton(frame: CGRect(x: 250, y: 30, width: 100, height: 200))
     markerButton = UIButton(frame: CGRect(x: 320, y: 30, width: 100, height: 200))
-    animateButton = UIButton(frame: CGRect(x: 400, y: 30, width: 100, height: 50))
-    beginAnimationButton = UIButton(frame: CGRect(x: 550, y: 30, width: 150, height: 50))
+    animateButton = ActionButton(frame: CGRect(x: 420, y: 30, width: 100, height: 100))
+    beginAnimationButton = ActionButton(frame: CGRect(x: 550, y: 30, width: 100, height: 100))
     view.addSubview(mainImageView!)
     view.addSubview(tempImageView!)
     view.addSubview(penButton)
@@ -136,6 +138,9 @@ open class MainViewController: UIViewController {
     guard pointsAnimation.count > 0 else { return }
     isAnimate = false
     index = 1
+    if let timer = timer {
+      timer.invalidate()
+    }
     timer = Timer.scheduledTimer(timeInterval: timeOfAnimation, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
   }
 
@@ -143,7 +148,7 @@ open class MainViewController: UIViewController {
     //    for i in 1..<pointsAnimation.count {
     let i = index
     index += 1
-    let time = pointsAnimation[i].timeBefore - pointsAnimation[i - 1].timeBefore
+    // let time = pointsAnimation[i].timeBefore - pointsAnimation[i - 1].timeBefore
     let point = pointsAnimation[i]
     if i == 1 {
       point.owner.center = point.point
