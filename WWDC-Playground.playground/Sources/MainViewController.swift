@@ -51,6 +51,8 @@ open class MainViewController: UIViewController {
   var savedImageViews = [UIImageView]()
   var isAnimate: Bool = false
   var cornersImage = corners()
+  var instrumentsView = UIView()
+  var isClearing: Bool = false
   var pointsAnimation = [savePoint]() {
     didSet {
       beginAnimationButton.isEnabled = pointsAnimation.count > 0 ? true : false
@@ -65,10 +67,16 @@ open class MainViewController: UIViewController {
       penButton.addTarget(self, action: #selector(penButtonPressed(_:)), for: .touchUpInside)
     }
   }
-  var markerButton: UIButton! {
+  var eraserButton: UIButton! {
     didSet {
-      markerButton.setImage(UIImage.init(named: "marker.png"), for: .normal)
-      markerButton.addTarget(self, action: #selector(markerButtonPressed(_:)), for: .touchUpInside)
+      eraserButton.setImage(UIImage.init(named: "eraser.png"), for: .normal)
+      eraserButton.addTarget(self, action: #selector(eraserButtonPressed(_:)), for: .touchUpInside)
+    }
+  }
+  var removeAllButton: ActionButton! {
+    didSet {
+      removeAllButton.setImage(UIImage.init(named: "remove.png"), for: .normal)
+      removeAllButton.addTarget(self, action: #selector(removeAllButtonPressed), for: .touchUpInside)
     }
   }
   var animateButton: ActionButton! {
@@ -81,6 +89,16 @@ open class MainViewController: UIViewController {
     didSet {
       beginAnimationButton.setImage(UIImage.init(named: "playIcon.png"), for: .normal)
       beginAnimationButton.addTarget(self, action: #selector(beginAnimationButtonPressed(_:)), for: .touchUpInside)
+      beginAnimationButton.isEnabled = false
+    }
+  }
+  var sizeSlider: UISlider! {
+    didSet {
+      sizeSlider.minimumValue = 5
+      sizeSlider.maximumValue = 15
+      sizeSlider.value = 10
+      sizeSlider.isEnabled = true
+      sizeSlider.addTarget(self, action: #selector(sliderValueDidChanged(_:)), for: .valueChanged)
     }
   }
 
@@ -91,36 +109,63 @@ open class MainViewController: UIViewController {
 
   func registerComponents() {
     self.view.backgroundColor = .white
+    instrumentsView = UIView(frame: CGRect(origin: view.frame.origin, size: CGSize(width: view.frame.size.width, height: 240)))
+    instrumentsView.backgroundColor = UIColor.lightGray //view.backgroundColor
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
-    penButton = UIButton(frame: CGRect(x: 250, y: 30, width: 100, height: 200))
-    markerButton = UIButton(frame: CGRect(x: 320, y: 30, width: 100, height: 200))
-    animateButton = ActionButton(frame: CGRect(x: 420, y: 30, width: 100, height: 100))
-    beginAnimationButton = ActionButton(frame: CGRect(x: 550, y: 30, width: 100, height: 100))
+    penButton = UIButton(frame: CGRect(x: 200, y: 10, width: 100, height: 150))
+    eraserButton = UIButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
+    animateButton = ActionButton(frame: CGRect(x: 400, y: 10, width: 120, height: 120))
+    removeAllButton = ActionButton(frame: CGRect(x: 220, y: 175, width: 60, height: 60))
+    beginAnimationButton = ActionButton(frame: CGRect(x: 530, y: 10, width: 120, height: 120))
+    sizeSlider = UISlider()
+    sizeSlider.frame.origin = CGPoint(x: 80, y: 200)
     view.addSubview(mainImageView!)
     view.addSubview(tempImageView!)
-    view.addSubview(penButton)
-    view.addSubview(markerButton)
-    view.addSubview(animateButton)
-    view.addSubview(beginAnimationButton)
+    instrumentsView.addSubview(penButton)
+    instrumentsView.addSubview(eraserButton)
+    instrumentsView.addSubview(animateButton)
+    instrumentsView.addSubview(beginAnimationButton)
+    instrumentsView.addSubview(sizeSlider)
+    instrumentsView.addSubview(removeAllButton)
+    view.addSubview(instrumentsView)
     addColorPicker()
   }
 
   func addColorPicker() {
-    colorPicker = ChromaColorPicker(frame: CGRect(x: 30, y: 30, width: sizeOfColorPicker, height: sizeOfColorPicker))
+    colorPicker = ChromaColorPicker(frame: CGRect(x: 30, y: 10, width: sizeOfColorPicker, height: sizeOfColorPicker))
     colorPicker.delegate = self
     colorPicker.padding = 10
     colorPicker.stroke = 3
     colorPicker.currentAngle = Float(M_PI)
-    view.addSubview(colorPicker)
+    instrumentsView.addSubview(colorPicker)
   }
 
   func penButtonPressed(_ sender: UIButton) {
-    brushWidth = 5.0
+    brushWidth = 10.0
   }
 
-  func markerButtonPressed(_ sender: UIButton) {
-    brushWidth = 10.0
+  func eraserButtonPressed(_ sender: UIButton) {
+    isClearing = !isClearing
+  }
+
+  func removeAllButtonPressed() {
+    mainImageView.image = nil
+    tempImageView.image = nil
+    isAnimate = false
+    sizeSlider.value = 10
+    for imageView in savedImageViews {
+      imageView.removeFromSuperview()
+    }
+    savedImageViews.removeAll()
+    pointsAnimation.removeAll()
+    if let timer = timer {
+      timer.invalidate()
+    }
+  }
+
+  func sliderValueDidChanged(_ sender: UISlider) {
+    brushWidth = CGFloat(sender.value)
   }
 
   func animateButtonPressed(_ sender: UIButton) {
@@ -128,6 +173,7 @@ open class MainViewController: UIViewController {
     isAnimate = !isAnimate
     guard savedImageViews.count > 0 else { return }
     for imageView in savedImageViews {
+//      imageView.frame.origin = imageView.center
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
     pointsAnimation.removeAll()
@@ -145,14 +191,12 @@ open class MainViewController: UIViewController {
   }
 
   func updateTimer() {
-    //    for i in 1..<pointsAnimation.count {
     let i = index
     index += 1
     // let time = pointsAnimation[i].timeBefore - pointsAnimation[i - 1].timeBefore
     let point = pointsAnimation[i]
     if i == 1 {
       point.owner.center = point.point
-//      continue
       return
     }
     UIView.animate(withDuration: timeOfAnimation * 2, animations: {
@@ -161,7 +205,6 @@ open class MainViewController: UIViewController {
     if index >= pointsAnimation.count {
       timer.invalidate()
     }
-    //    }
   }
 
   override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -200,7 +243,7 @@ open class MainViewController: UIViewController {
     self.tempImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height), blendMode: CGBlendMode.normal, alpha: self.opacity)
     self.mainImageView.image = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
-    if let image = tempImageView.image{
+    if let image = tempImageView.image {
       let imageView = UIImageView(image: image)
       imageView.isUserInteractionEnabled = true
       let width = cornersImage.right - cornersImage.left
@@ -243,13 +286,13 @@ extension MainViewController {
     UIGraphicsBeginImageContext(self.view.frame.size)
     let context = UIGraphicsGetCurrentContext()
     self.tempImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height))
-
+    let blend: CGBlendMode = isClearing ? .clear : .normal
     context?.move(to: fromPoint)
     context?.addLine(to: toPoint)
     context?.setLineCap(CGLineCap.round)
     context?.setLineWidth(self.brushWidth)
     context?.setStrokeColor(red: self.red, green: self.green, blue: self.blue, alpha: 1.0)
-    context?.setBlendMode(CGBlendMode.normal)
+    context?.setBlendMode(blend)
     context?.strokePath()
 
     self.tempImageView.image = UIGraphicsGetImageFromCurrentImageContext()
