@@ -48,19 +48,28 @@ open class MainViewController: UIViewController {
   var mainImageView: UIImageView!
   var tempImageView: UIImageView!
   var sizeOfColorPicker: CGFloat = 200.0
-  var savedImageViews = [UIImageView]()
+  var savedImageViews = [UIImageView]() {
+    didSet {
+      animateButton.isEnabled = savedImageViews.count > 0 ? true : false
+    }
+  }
   var isAnimate: Bool = false
   var cornersImage = corners()
   var instrumentsView = UIView()
   var isClearing: Bool = false
   var pointsAnimation = [savePoint]() {
     didSet {
-      beginAnimationButton.isEnabled = pointsAnimation.count > 0 ? true : false
+      beginAnimationButton.isEnabled = pointsAnimation.count > 1 ? true : false
     }
   }
   var timer: Timer!
   var index: Int = 1
 
+  var lineImageView: UIImageView! {
+    didSet {
+      lineImageView.image = UIImage.init(named: "lineIcon.png")
+    }
+  }
   var penButton: UIButton! {
     didSet {
       penButton.setImage(UIImage.init(named: "pen.png"), for: .normal)
@@ -83,6 +92,7 @@ open class MainViewController: UIViewController {
     didSet {
       animateButton.setImage(UIImage.init(named: "animateButton.png"), for: .normal)
       animateButton.addTarget(self, action: #selector(animateButtonPressed(_:)), for: .touchUpInside)
+      animateButton.isEnabled = false
     }
   }
   var beginAnimationButton: ActionButton! {
@@ -110,14 +120,17 @@ open class MainViewController: UIViewController {
   func registerComponents() {
     self.view.backgroundColor = .white
     instrumentsView = UIView(frame: CGRect(origin: view.frame.origin, size: CGSize(width: view.frame.size.width, height: 240)))
-    instrumentsView.backgroundColor = UIColor.lightGray //view.backgroundColor
+    instrumentsView.backgroundColor = view.backgroundColor //UIColor.lightGray
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
     penButton = UIButton(frame: CGRect(x: 200, y: 10, width: 100, height: 150))
     eraserButton = UIButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
-    animateButton = ActionButton(frame: CGRect(x: 400, y: 10, width: 120, height: 120))
+    animateButton = ActionButton(frame: CGRect(x: 380, y: 10, width: 120, height: 120))
     removeAllButton = ActionButton(frame: CGRect(x: 220, y: 175, width: 60, height: 60))
-    beginAnimationButton = ActionButton(frame: CGRect(x: 530, y: 10, width: 120, height: 120))
+    beginAnimationButton = ActionButton(frame: CGRect(x: 510, y: 10, width: 120, height: 120))
+    lineImageView = UIImageView(frame: CGRect(x: instrumentsView.frame.origin.x,
+                                              y: instrumentsView.frame.size.height - 16,
+                                              width: instrumentsView.frame.size.width, height: 30))
     sizeSlider = UISlider()
     sizeSlider.frame.origin = CGPoint(x: 80, y: 200)
     view.addSubview(mainImageView!)
@@ -128,6 +141,7 @@ open class MainViewController: UIViewController {
     instrumentsView.addSubview(beginAnimationButton)
     instrumentsView.addSubview(sizeSlider)
     instrumentsView.addSubview(removeAllButton)
+    view.addSubview(lineImageView)
     view.addSubview(instrumentsView)
     addColorPicker()
   }
@@ -181,7 +195,7 @@ open class MainViewController: UIViewController {
   }
 
   func beginAnimationButtonPressed(_ sender: UIButton) {
-    guard pointsAnimation.count > 0 else { return }
+    guard pointsAnimation.count > 1 else { return }
     isAnimate = false
     index = 1
     if let timer = timer {
@@ -254,6 +268,9 @@ open class MainViewController: UIViewController {
                                                       width: width,
                                                       height: height)
       imageView.addGestureRecognizer(UIPanGestureRecognizer(target: self, action: #selector(imageDragged(gesture:))))
+      let point = view.center
+      imageView.frame.origin = CGPoint(x: point.x - imageView.frame.size.width / 2,
+                                       y: point.y - imageView.frame.size.height / 2)
       savedImageViews.append(imageView)
     }
     self.tempImageView.image = nil
