@@ -67,37 +67,37 @@ open class MainViewController: UIViewController {
 
   var lineImageView: UIImageView! {
     didSet {
-      lineImageView.image = UIImage.init(named: "lineIcon.png")
+      lineImageView.image = UIImage.init(named: "Images/lineIcon.png")
     }
   }
   var penButton: UIButton! {
     didSet {
-      penButton.setImage(UIImage.init(named: "pen.png"), for: .normal)
+      penButton.setImage(UIImage.init(named: "Images/pen.png"), for: .normal)
       penButton.addTarget(self, action: #selector(penButtonPressed(_:)), for: .touchUpInside)
     }
   }
   var eraserButton: UIButton! {
     didSet {
-      eraserButton.setImage(UIImage.init(named: "eraser.png"), for: .normal)
+      eraserButton.setImage(UIImage.init(named: "Images/eraser.png"), for: .normal)
       eraserButton.addTarget(self, action: #selector(eraserButtonPressed(_:)), for: .touchUpInside)
     }
   }
   var removeAllButton: ActionButton! {
     didSet {
-      removeAllButton.setImage(UIImage.init(named: "remove.png"), for: .normal)
+      removeAllButton.setImage(UIImage.init(named: "Images/remove.png"), for: .normal)
       removeAllButton.addTarget(self, action: #selector(removeAllButtonPressed), for: .touchUpInside)
     }
   }
   var animateButton: ActionButton! {
     didSet {
-      animateButton.setImage(UIImage.init(named: "animateButton.png"), for: .normal)
+      animateButton.setImage(UIImage.init(named: "Images/animateButton.png"), for: .normal)
       animateButton.addTarget(self, action: #selector(animateButtonPressed(_:)), for: .touchUpInside)
       animateButton.isEnabled = false
     }
   }
   var beginAnimationButton: ActionButton! {
     didSet {
-      beginAnimationButton.setImage(UIImage.init(named: "playIcon.png"), for: .normal)
+      beginAnimationButton.setImage(UIImage.init(named: "Images/playIcon.png"), for: .normal)
       beginAnimationButton.addTarget(self, action: #selector(beginAnimationButtonPressed(_:)), for: .touchUpInside)
       beginAnimationButton.isEnabled = false
     }
