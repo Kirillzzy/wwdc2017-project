@@ -39,13 +39,13 @@ open class MainViewController: UIViewController {
       lineImageView.image = UIImage.init(named: "Images/lineIcon.png")
     }
   }
-  var penButton: UIButton! {
+  var penButton: ActionButton! {
     didSet {
       penButton.setImage(UIImage.init(named: "Images/pen.png"), for: .normal)
       penButton.addTarget(self, action: #selector(penButtonPressed(_:)), for: .touchUpInside)
     }
   }
-  var eraserButton: UIButton! {
+  var eraserButton: ActionButton! {
     didSet {
       eraserButton.setImage(UIImage.init(named: "Images/eraser.png"), for: .normal)
       eraserButton.addTarget(self, action: #selector(eraserButtonPressed(_:)), for: .touchUpInside)
@@ -91,12 +91,14 @@ open class MainViewController: UIViewController {
       let point = view.center
       let width: CGFloat = 100
       let height = width
-      animateGuide.imageView = UIImageView(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
-      animateGuide.imageView.image = UIImage.init(named: "Images/drawingPen.png")
-      animateGuide.label = UILabel(frame: CGRect(x: point.x - width, y: point.y - height * 2.5, width: width * 4, height: 40))
-      animateGuide.label.text = "Draw something like me"
-      animateGuide.label.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
-      animateGuide.label.textColor = .gray
+      animateGuide.button = UIButton(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
+      animateGuide.button.setImage(UIImage.init(named: "Images/drawingPen.png"), for: .normal)
+      animateGuide.label = UIButton(frame: CGRect(x: point.x - width * 2, y: point.y - height * 2.5, width: width * 4, height: 40))
+      animateGuide.label.setTitle("Draw something like me", for: .normal)
+      animateGuide.label.titleLabel?.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
+      animateGuide.label.setTitleColor(.gray, for: .normal)
+      animateGuide.arrowButton = UIButton(frame: CGRect(x: 270, y: 50, width: 70, height: 70))
+      animateGuide.arrowButton.setImage(UIImage.init(named: "Images/arrow.png"), for: .normal)
     }
   }
 
@@ -112,8 +114,8 @@ open class MainViewController: UIViewController {
     instrumentsView.backgroundColor = view.backgroundColor //UIColor.lightGray
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
-    penButton = UIButton(frame: CGRect(x: 200, y: 10, width: 100, height: 150))
-    eraserButton = UIButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
+    penButton = ActionButton(frame: CGRect(x: 200, y: 10, width: 100, height: 150))
+    eraserButton = ActionButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
     animateButton = ActionButton(frame: CGRect(x: 380, y: 10, width: 120, height: 120))
     removeAllButton = ActionButton(frame: CGRect(x: 220, y: 175, width: 60, height: 60))
     beginAnimationButton = ActionButton(frame: CGRect(x: 510, y: 10, width: 120, height: 120))
@@ -148,6 +150,7 @@ open class MainViewController: UIViewController {
 
   func penButtonPressed(_ sender: UIButton) {
     brushWidth = 10.0
+    isClearing = false
   }
 
   func eraserButtonPressed(_ sender: UIButton) {
@@ -283,57 +286,68 @@ open class MainViewController: UIViewController {
       return
     }
     animateGuide = AnimationGuide()
-    let animationImageView = animateGuide.imageView!
+    let animationImageView = animateGuide.button!
     let label = animateGuide.label!
+    let arrowButton = animateGuide.arrowButton!
     view.addSubview(animationImageView)
     view.addSubview(label)
+    view.addSubview(arrowButton)
     let timeOfAnimation: TimeInterval = 1.7
     UIView.animate(withDuration: timeOfAnimation, animations: {
       animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 200, y: animationImageView.frame.origin.y - 100)
+      arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
     })
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x + 300, y: animationImageView.frame.origin.y)
+        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x - 20, y: arrowButton.frame.origin.y)
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 2) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y + 300)
+        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 3) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 300, y: animationImageView.frame.origin.y)
+        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x - 20, y: arrowButton.frame.origin.y)
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 4) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y - 300)
+        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         label.alpha = 0
         animationImageView.alpha = 0
+        arrowButton.alpha = 0
       })
       DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
         label.removeFromSuperview()
         animationImageView.removeFromSuperview()
+        arrowButton.removeFromSuperview()
       }
     }
   }
 
   func stopGuideAnimation() {
     if let animateGuide = animateGuide {
-      if let imageView = animateGuide.imageView {
+      if let imageView = animateGuide.button {
         imageView.removeFromSuperview()
       }
       if let label = animateGuide.label {
         label.removeFromSuperview()
       }
+      if let arrowButton = animateGuide.arrowButton {
+        arrowButton.removeFromSuperview()
+      }
     }
   }
-
 }
 
 // MARK: - Working with images

@@ -31,11 +31,13 @@ public struct SavePoint {
 }
 
 public struct AnimationGuide {
-  var label: UILabel!
-  var imageView: UIImageView!
+  var label: UIButton!
+  var button: UIButton!
+  var arrowButton: UIButton!
 
   init(){
-    label = UILabel()
-    imageView = UIImageView()
+    label = UIButton()
+    button = UIButton()
+    arrowButton = UIButton()
   }
 }
