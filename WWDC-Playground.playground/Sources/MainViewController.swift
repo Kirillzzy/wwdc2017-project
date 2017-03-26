@@ -5,48 +5,7 @@ import UIKit
 
 open class MainViewController: UIViewController {
 
-  struct Corners {
-    var left: CGFloat
-    var right: CGFloat
-    var up: CGFloat
-    var down: CGFloat
-    init(point: CGPoint) {
-      left = point.x
-      right = point.x
-      down = point.y
-      up = point.y
-    }
-    init() {
-      left = 0
-      right = 0
-      down = 0
-      up = 0
-    }
-  }
-
-  struct SavePoint {
-    var point: CGPoint
-    var timeBefore: TimeInterval = 0
-    var owner: UIImageView
-    init(point: CGPoint, timeBefore: TimeInterval, owner: UIImageView) {
-      self.point = point
-      self.timeBefore = timeBefore
-      self.owner = owner
-    }
-  }
-
-  struct AnimationGuide {
-    var label: UILabel!
-    var imageView: UIImageView!
-
-    init(){
-      label = UILabel()
-      imageView = UIImageView()
-    }
-  }
-
   let timeOfAnimation: TimeInterval = 0.01
-
   var lastPoint = CGPoint.zero
   var red: CGFloat = 0.0
   var green: CGFloat = 0.999999916517394
@@ -206,9 +165,7 @@ open class MainViewController: UIViewController {
     stopGuideAnimation()
     savedImageViews.removeAll()
     pointsAnimation.removeAll()
-    if let timer = timer {
-      timer.invalidate()
-    }
+    invalidateTimer()
   }
 
   func sliderValueDidChanged(_ sender: UISlider) {
@@ -218,11 +175,13 @@ open class MainViewController: UIViewController {
   func animateButtonPressed(_ sender: UIButton) {
     mainImageView.image = nil
     isAnimate = !isAnimate
+    stopGuideAnimation()
     guard savedImageViews.count > 0 else { return }
     for imageView in savedImageViews {
       //      imageView.frame.origin = imageView.center
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
+    invalidateTimer()
     pointsAnimation.removeAll()
     pointsAnimation.append(SavePoint(point: CGPoint(), timeBefore: Date().timeIntervalSince1970, owner: UIImageView()))
   }
@@ -230,10 +189,9 @@ open class MainViewController: UIViewController {
   func beginAnimationButtonPressed(_ sender: UIButton) {
     guard pointsAnimation.count > 1 else { return }
     isAnimate = false
+    stopGuideAnimation()
     index = 1
-    if let timer = timer {
-      timer.invalidate()
-    }
+    invalidateTimer()
     timer = Timer.scheduledTimer(timeInterval: timeOfAnimation, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
   }
 
@@ -251,13 +209,19 @@ open class MainViewController: UIViewController {
     })
     if index >= pointsAnimation.count {
       index = 1
-      //      timer.invalidate()
+    }
+  }
+
+  func invalidateTimer() {
+    if let timer = timer {
+      timer.invalidate()
     }
   }
 
   override open func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
     super.touchesBegan(touches, with: event)
     if isAnimate { return }
+    invalidateTimer()
     self.swiped = false
     if let touch = touches.first {
       self.lastPoint = touch.location(in: self.view)
@@ -268,6 +232,7 @@ open class MainViewController: UIViewController {
   override open func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
     super.touchesMoved(touches, with: event)
     if isAnimate { return }
+    invalidateTimer()
     self.swiped = true
     if let touch = touches.first {
       let currentPoint = touch.location(in: self.view)
@@ -280,6 +245,7 @@ open class MainViewController: UIViewController {
   override open func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
     super.touchesEnded(touches, with: event)
     if isAnimate { return }
+    invalidateTimer()
     if !self.swiped {
       self.drawLineFrom(fromPoint: self.lastPoint, toPoint: self.lastPoint)
       checkCorners(point: lastPoint)
@@ -312,6 +278,7 @@ open class MainViewController: UIViewController {
 
   func showGuide() {
     stopGuideAnimation()
+    invalidateTimer()
     if isAnimate {
       return
     }
