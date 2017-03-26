@@ -112,9 +112,17 @@ open class MainViewController: UIViewController {
     }
   }
 
+  var guideButton: UIButton! {
+    didSet {
+      removeAllButton.setImage(UIImage.init(named: "Images/guide.png"), for: .normal)
+      removeAllButton.addTarget(self, action: #selector(showGuide), for: .touchUpInside)
+    }
+  }
+
   override open func viewDidLoad() {
     super.viewDidLoad()
     registerComponents()
+    showGuide()
   }
 
   func registerComponents() {
@@ -127,6 +135,7 @@ open class MainViewController: UIViewController {
     eraserButton = UIButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
     animateButton = ActionButton(frame: CGRect(x: 380, y: 10, width: 120, height: 120))
     removeAllButton = ActionButton(frame: CGRect(x: 220, y: 175, width: 60, height: 60))
+    //    guideButton = ActionButton(frame: CGRect(x: 300, y: 200, width: 60, height: 60))
     beginAnimationButton = ActionButton(frame: CGRect(x: 510, y: 10, width: 120, height: 120))
     lineImageView = UIImageView(frame: CGRect(x: instrumentsView.frame.origin.x,
                                               y: instrumentsView.frame.size.height - 16,
@@ -141,6 +150,7 @@ open class MainViewController: UIViewController {
     instrumentsView.addSubview(beginAnimationButton)
     instrumentsView.addSubview(sizeSlider)
     instrumentsView.addSubview(removeAllButton)
+    //    instrumentsView.addSubview(guideButton)
     view.addSubview(lineImageView)
     view.addSubview(instrumentsView)
     addColorPicker()
@@ -187,7 +197,7 @@ open class MainViewController: UIViewController {
     isAnimate = !isAnimate
     guard savedImageViews.count > 0 else { return }
     for imageView in savedImageViews {
-//      imageView.frame.origin = imageView.center
+      //      imageView.frame.origin = imageView.center
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
     pointsAnimation.removeAll()
@@ -217,7 +227,8 @@ open class MainViewController: UIViewController {
       point.owner.center = point.point
     })
     if index >= pointsAnimation.count {
-      timer.invalidate()
+      index = 1
+      //      timer.invalidate()
     }
   }
 
@@ -276,6 +287,47 @@ open class MainViewController: UIViewController {
     self.tempImageView.image = nil
   }
 
+  func showGuide() {
+    let point = view.center
+    let width: CGFloat = 100
+    let height = width
+    let animationImageView = UIImageView(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
+    animationImageView.image = UIImage.init(named: "Images/drawingPen.png")
+    let label = UILabel(frame: CGRect(x: point.x - width, y: point.y - height * 2.5, width: width * 4, height: 40))
+    label.text = "Draw something like me"
+    label.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
+    label.textColor = .gray
+    view.addSubview(animationImageView)
+    view.addSubview(label)
+    let timeOfAnimation: TimeInterval = 1.7
+    UIView.animate(withDuration: timeOfAnimation, animations: {
+      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 200, y: animationImageView.frame.origin.y - 100)
+    })
+    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
+      UIView.animate(withDuration: timeOfAnimation, animations: {
+        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x + 300, y: animationImageView.frame.origin.y)
+      })
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 2) {
+      UIView.animate(withDuration: timeOfAnimation, animations: {
+        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y + 300)
+      })
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 3) {
+      UIView.animate(withDuration: timeOfAnimation, animations: {
+        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 300, y: animationImageView.frame.origin.y)
+      })
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 4) {
+      UIView.animate(withDuration: timeOfAnimation, animations: {
+        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y - 300)
+      })
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
+      label.removeFromSuperview()
+      animationImageView.removeFromSuperview()
+    }
+  }
 
 }
 
