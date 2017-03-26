@@ -5,7 +5,7 @@ import UIKit
 
 open class MainViewController: UIViewController {
 
-  struct corners {
+  struct Corners {
     var left: CGFloat
     var right: CGFloat
     var up: CGFloat
@@ -24,7 +24,7 @@ open class MainViewController: UIViewController {
     }
   }
 
-  struct savePoint {
+  struct SavePoint {
     var point: CGPoint
     var timeBefore: TimeInterval = 0
     var owner: UIImageView
@@ -32,6 +32,16 @@ open class MainViewController: UIViewController {
       self.point = point
       self.timeBefore = timeBefore
       self.owner = owner
+    }
+  }
+
+  struct AnimationGuide {
+    var label: UILabel!
+    var imageView: UIImageView!
+
+    init(){
+      label = UILabel()
+      imageView = UIImageView()
     }
   }
 
@@ -54,10 +64,10 @@ open class MainViewController: UIViewController {
     }
   }
   var isAnimate: Bool = false
-  var cornersImage = corners()
+  var cornersImage = Corners()
   var instrumentsView = UIView()
   var isClearing: Bool = false
-  var pointsAnimation = [savePoint]() {
+  var pointsAnimation = [SavePoint]() {
     didSet {
       beginAnimationButton.isEnabled = pointsAnimation.count > 1 ? true : false
     }
@@ -111,11 +121,23 @@ open class MainViewController: UIViewController {
       sizeSlider.addTarget(self, action: #selector(sliderValueDidChanged(_:)), for: .valueChanged)
     }
   }
-
-  var guideButton: UIButton! {
+  var guideButton: ActionButton! {
     didSet {
-      removeAllButton.setImage(UIImage.init(named: "Images/guide.png"), for: .normal)
-      removeAllButton.addTarget(self, action: #selector(showGuide), for: .touchUpInside)
+      guideButton.setImage(UIImage.init(named: "Images/guide.png"), for: .normal)
+      guideButton.addTarget(self, action: #selector(showGuide), for: .touchUpInside)
+    }
+  }
+  var animateGuide: AnimationGuide! {
+    didSet {
+      let point = view.center
+      let width: CGFloat = 100
+      let height = width
+      animateGuide.imageView = UIImageView(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
+      animateGuide.imageView.image = UIImage.init(named: "Images/drawingPen.png")
+      animateGuide.label = UILabel(frame: CGRect(x: point.x - width, y: point.y - height * 2.5, width: width * 4, height: 40))
+      animateGuide.label.text = "Draw something like me"
+      animateGuide.label.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
+      animateGuide.label.textColor = .gray
     }
   }
 
@@ -135,8 +157,8 @@ open class MainViewController: UIViewController {
     eraserButton = UIButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
     animateButton = ActionButton(frame: CGRect(x: 380, y: 10, width: 120, height: 120))
     removeAllButton = ActionButton(frame: CGRect(x: 220, y: 175, width: 60, height: 60))
-    //    guideButton = ActionButton(frame: CGRect(x: 300, y: 200, width: 60, height: 60))
     beginAnimationButton = ActionButton(frame: CGRect(x: 510, y: 10, width: 120, height: 120))
+    guideButton = ActionButton(frame: CGRect(x: 300, y: 175, width: 60, height: 60))
     lineImageView = UIImageView(frame: CGRect(x: instrumentsView.frame.origin.x,
                                               y: instrumentsView.frame.size.height - 16,
                                               width: instrumentsView.frame.size.width, height: 30))
@@ -150,7 +172,7 @@ open class MainViewController: UIViewController {
     instrumentsView.addSubview(beginAnimationButton)
     instrumentsView.addSubview(sizeSlider)
     instrumentsView.addSubview(removeAllButton)
-    //    instrumentsView.addSubview(guideButton)
+    instrumentsView.addSubview(guideButton)
     view.addSubview(lineImageView)
     view.addSubview(instrumentsView)
     addColorPicker()
@@ -181,6 +203,7 @@ open class MainViewController: UIViewController {
     for imageView in savedImageViews {
       imageView.removeFromSuperview()
     }
+    stopGuideAnimation()
     savedImageViews.removeAll()
     pointsAnimation.removeAll()
     if let timer = timer {
@@ -201,7 +224,7 @@ open class MainViewController: UIViewController {
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
     pointsAnimation.removeAll()
-    pointsAnimation.append(savePoint(point: CGPoint(), timeBefore: Date().timeIntervalSince1970, owner: UIImageView()))
+    pointsAnimation.append(SavePoint(point: CGPoint(), timeBefore: Date().timeIntervalSince1970, owner: UIImageView()))
   }
 
   func beginAnimationButtonPressed(_ sender: UIButton) {
@@ -238,7 +261,7 @@ open class MainViewController: UIViewController {
     self.swiped = false
     if let touch = touches.first {
       self.lastPoint = touch.location(in: self.view)
-      cornersImage = corners(point: lastPoint)
+      cornersImage = Corners(point: lastPoint)
     }
   }
 
@@ -288,15 +311,13 @@ open class MainViewController: UIViewController {
   }
 
   func showGuide() {
-    let point = view.center
-    let width: CGFloat = 100
-    let height = width
-    let animationImageView = UIImageView(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
-    animationImageView.image = UIImage.init(named: "Images/drawingPen.png")
-    let label = UILabel(frame: CGRect(x: point.x - width, y: point.y - height * 2.5, width: width * 4, height: 40))
-    label.text = "Draw something like me"
-    label.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
-    label.textColor = .gray
+    stopGuideAnimation()
+    if isAnimate {
+      return
+    }
+    animateGuide = AnimationGuide()
+    let animationImageView = animateGuide.imageView!
+    let label = animateGuide.label!
     view.addSubview(animationImageView)
     view.addSubview(label)
     let timeOfAnimation: TimeInterval = 1.7
@@ -324,8 +345,25 @@ open class MainViewController: UIViewController {
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
-      label.removeFromSuperview()
-      animationImageView.removeFromSuperview()
+      UIView.animate(withDuration: timeOfAnimation, animations: {
+        label.alpha = 0
+        animationImageView.alpha = 0
+      })
+      DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
+        label.removeFromSuperview()
+        animationImageView.removeFromSuperview()
+      }
+    }
+  }
+
+  func stopGuideAnimation() {
+    if let animateGuide = animateGuide {
+      if let imageView = animateGuide.imageView {
+        imageView.removeFromSuperview()
+      }
+      if let label = animateGuide.label {
+        label.removeFromSuperview()
+      }
     }
   }
 
@@ -346,7 +384,7 @@ extension MainViewController {
     let imageView = gesture.view as! UIImageView
     let point = gesture.location(in: view)
     imageView.center = point
-    pointsAnimation.append(savePoint(point: point,
+    pointsAnimation.append(SavePoint(point: point,
                                      timeBefore: Date().timeIntervalSince1970,
                                      owner: imageView))
   }
