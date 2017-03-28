@@ -241,8 +241,8 @@ public class ChromaColorPicker: UIControl {
 
     let subdivisions:CGFloat = CGFloat(resolution * 512)
 
-    let innerHeight = (CGFloat(M_PI)*innerRadius)/subdivisions
-    let outterHeight = (CGFloat(M_PI)*outerRadius)/subdivisions
+    let innerHeight = (CGFloat(Float.pi) * innerRadius) / subdivisions
+    let outterHeight = (CGFloat(Float.pi) * outerRadius) / subdivisions
 
     let segment = UIBezierPath()
     segment.move(to: CGPoint(x: innerRadius, y: -innerHeight/2))
@@ -254,12 +254,12 @@ public class ChromaColorPicker: UIControl {
     for i in 0 ..< Int(ceil(subdivisions)) {
       UIColor(hue: CGFloat(i)/subdivisions, saturation: 1, brightness: 1, alpha: 1).set()
       segment.fill()
-      let lineTailSpace = CGFloat(M_PI*2)*outerRadius/subdivisions
+      let lineTailSpace = CGFloat(Float.pi * 2) * outerRadius / subdivisions
       segment.lineWidth = lineTailSpace
       segment.stroke()
 
       //Rotate to correct location
-      let rotate = CGAffineTransform(rotationAngle: -(CGFloat(M_PI*2)/subdivisions))
+      let rotate = CGAffineTransform(rotationAngle: -(CGFloat(Float.pi * 2) / subdivisions))
       segment.apply(rotate)
     }
 
@@ -309,8 +309,8 @@ public class ChromaColorPicker: UIControl {
     let centerPoint = CGPoint(x: bounds.midX, y: bounds.midY)
     let insideRadius = radius - padding
 
-    let pointLeft = CGPoint(x: centerPoint.x + insideRadius*CGFloat(cos(7*M_PI/6)), y: centerPoint.y - insideRadius*CGFloat(sin(7*M_PI/6)))
-    let pointRight = CGPoint(x: centerPoint.x + insideRadius*CGFloat(cos(11*M_PI/6)), y: centerPoint.y - insideRadius*CGFloat(sin(11*M_PI/6)))
+    let pointLeft = CGPoint(x: centerPoint.x + insideRadius*CGFloat(cos(7 * Float.pi/6)), y: centerPoint.y - insideRadius*CGFloat(sin(7 * Float.pi/6)))
+    let pointRight = CGPoint(x: centerPoint.x + insideRadius*CGFloat(cos(11 * Float.pi/6)), y: centerPoint.y - insideRadius*CGFloat(sin(11 * Float.pi/6)))
     let deltaX = pointRight.x - pointLeft.x
 
 
@@ -332,22 +332,22 @@ public class ChromaColorPicker: UIControl {
     let deltaY = Float(self.bounds.midY - point.y)
     let angle = atan2f(deltaX, deltaY)
 
-    var adjustedAngle = angle + Float(M_PI/2)
+    var adjustedAngle = angle + Float(Float.pi / 2)
     if (adjustedAngle < 0){
-      adjustedAngle += Float(M_PI*2)
+      adjustedAngle += Float(Float.pi * 2)
     }
 
     return adjustedAngle
   }
 
   private func colorOnWheelFromAngle(_ angle: Float) -> UIColor {
-    return UIColor(hue: CGFloat(Double(angle)/(2*M_PI)), saturation: 1, brightness: 1, alpha: 1)
+    return UIColor(hue: CGFloat(Double(angle) / Double(2 * Float.pi)), saturation: 1, brightness: 1, alpha: 1)
   }
 
   private func angleForColor(_ color: UIColor) -> Float {
     var hue: CGFloat = 0
     color.getHue(&hue, saturation: nil, brightness: nil, alpha: nil)
-    return Float(hue * CGFloat(2*M_PI))
+    return Float(hue * CGFloat(2 * Float.pi))
   }
 
   private func positionOnWheelFromAngle(_ angle: Float) -> CGPoint{

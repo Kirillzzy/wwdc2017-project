@@ -5,7 +5,7 @@ import UIKit
 
 open class MainViewController: UIViewController {
 
-  let timeOfAnimation: TimeInterval = 0.01
+  let timeOfAnimation: TimeInterval = 0.02
   var lastPoint = CGPoint.zero
   var red: CGFloat = 0.0
   var green: CGFloat = 0.999999916517394
@@ -20,6 +20,7 @@ open class MainViewController: UIViewController {
   var savedImageViews = [UIImageView]() {
     didSet {
       animateButton.isEnabled = savedImageViews.count > 0 ? true : false
+      stopGuideAnimation()
     }
   }
   var isAnimate: Bool = false
@@ -39,22 +40,34 @@ open class MainViewController: UIViewController {
       lineImageView.image = UIImage.init(named: "Images/lineIcon.png")
     }
   }
+  var beginButton: ActionButton! {
+    didSet {
+      beginButton.setImage(UIImage.init(named: "Images/begin.png"), for: .normal)
+      beginButton.addTarget(self, action: #selector(beginButtonPressed), for: .touchUpInside)
+    }
+  }
   var penButton: ActionButton! {
     didSet {
       penButton.setImage(UIImage.init(named: "Images/pen.png"), for: .normal)
       penButton.addTarget(self, action: #selector(penButtonPressed(_:)), for: .touchUpInside)
     }
   }
-  var eraserButton: ActionButton! {
-    didSet {
-      eraserButton.setImage(UIImage.init(named: "Images/eraser.png"), for: .normal)
-      eraserButton.addTarget(self, action: #selector(eraserButtonPressed(_:)), for: .touchUpInside)
-    }
-  }
+//  var eraserButton: ActionButton! {
+//    didSet {
+//      eraserButton.setImage(UIImage.init(named: "Images/eraser.png"), for: .normal)
+//      eraserButton.addTarget(self, action: #selector(eraserButtonPressed(_:)), for: .touchUpInside)
+//    }
+//  }
   var removeAllButton: ActionButton! {
     didSet {
       removeAllButton.setImage(UIImage.init(named: "Images/remove.png"), for: .normal)
       removeAllButton.addTarget(self, action: #selector(removeAllButtonPressed), for: .touchUpInside)
+    }
+  }
+  var demoAnimationButton: ActionButton! {
+    didSet {
+      demoAnimationButton.setImage(UIImage.init(named: "Images/demo.png"), for: .normal)
+      demoAnimationButton.addTarget(self, action: #selector(demoAnimationButtonPressed), for: .touchUpInside)
     }
   }
   var animateButton: ActionButton! {
@@ -93,7 +106,7 @@ open class MainViewController: UIViewController {
       let height = width
       animateGuide.button = UIButton(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
       animateGuide.button.setImage(UIImage.init(named: "Images/drawingPen.png"), for: .normal)
-      animateGuide.label = UIButton(frame: CGRect(x: point.x - width * 2, y: point.y - height * 2.5, width: width * 4, height: 40))
+      animateGuide.label = UIButton(frame: CGRect(x: view.center.x - width * 2, y: point.y - height * 2.5, width: width * 4, height: 40))
       animateGuide.label.setTitle("Draw something like me", for: .normal)
       animateGuide.label.titleLabel?.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
       animateGuide.label.setTitleColor(.gray, for: .normal)
@@ -104,21 +117,28 @@ open class MainViewController: UIViewController {
 
   override open func viewDidLoad() {
     super.viewDidLoad()
+    self.view.backgroundColor = .white
+    beginButton = ActionButton()
+    beginButton.frame.size = CGSize(width: 200, height: 200)
+    beginButton.center = view.center
+    view.addSubview(beginButton)
+  }
+
+  func start() {
     registerComponents()
     showGuide()
   }
 
   func registerComponents() {
-    self.view.backgroundColor = .white
     instrumentsView = UIView(frame: CGRect(origin: view.frame.origin, size: CGSize(width: view.frame.size.width, height: 240)))
     instrumentsView.backgroundColor = view.backgroundColor //UIColor.lightGray
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
     penButton = ActionButton(frame: CGRect(x: 200, y: 10, width: 100, height: 150))
-    eraserButton = ActionButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
-    animateButton = ActionButton(frame: CGRect(x: 380, y: 10, width: 120, height: 120))
+//    eraserButton = ActionButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
+    animateButton = ActionButton(frame: CGRect(x: 300, y: 10, width: 120, height: 120))
     removeAllButton = ActionButton(frame: CGRect(x: 220, y: 175, width: 60, height: 60))
-    beginAnimationButton = ActionButton(frame: CGRect(x: 510, y: 10, width: 120, height: 120))
+    beginAnimationButton = ActionButton(frame: CGRect(x: 430, y: 10, width: 120, height: 120))
     guideButton = ActionButton(frame: CGRect(x: 300, y: 175, width: 60, height: 60))
     lineImageView = UIImageView(frame: CGRect(x: instrumentsView.frame.origin.x,
                                               y: instrumentsView.frame.size.height - 16,
@@ -128,7 +148,7 @@ open class MainViewController: UIViewController {
     view.addSubview(mainImageView!)
     view.addSubview(tempImageView!)
     instrumentsView.addSubview(penButton)
-    instrumentsView.addSubview(eraserButton)
+//    instrumentsView.addSubview(eraserButton)
     instrumentsView.addSubview(animateButton)
     instrumentsView.addSubview(beginAnimationButton)
     instrumentsView.addSubview(sizeSlider)
@@ -144,7 +164,7 @@ open class MainViewController: UIViewController {
     colorPicker.delegate = self
     colorPicker.padding = 10
     colorPicker.stroke = 3
-    colorPicker.currentAngle = Float(M_PI)
+    colorPicker.currentAngle = .pi
     instrumentsView.addSubview(colorPicker)
   }
 
@@ -169,6 +189,15 @@ open class MainViewController: UIViewController {
     savedImageViews.removeAll()
     pointsAnimation.removeAll()
     invalidateTimer()
+  }
+
+  func demoAnimationButtonPressed() {
+    let imageBoy = UIImageView(frame: CGRect(x: 100, y: 600, width: 100, height: 250))
+    let imageBall = UIImageView(frame: CGRect(x: 200, y: 600, width: 100, height: 250))
+    let imageWall = UIImageView(frame: CGRect(x: 500, y: 600, width: 100, height: 250))
+    savedImageViews.append(imageBoy)
+    savedImageViews.append(imageBall)
+    savedImageViews.append(imageWall)
   }
 
   func sliderValueDidChanged(_ sender: UISlider) {
@@ -196,6 +225,11 @@ open class MainViewController: UIViewController {
     index = 1
     invalidateTimer()
     timer = Timer.scheduledTimer(timeInterval: timeOfAnimation, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
+  }
+
+  func beginButtonPressed() {
+    self.beginButton.removeFromSuperview()
+    self.start()
   }
 
   func updateTimer() {
@@ -227,6 +261,7 @@ open class MainViewController: UIViewController {
     invalidateTimer()
     self.swiped = false
     if let touch = touches.first {
+      if touch.location(in: self.view).y < 240 { return }
       self.lastPoint = touch.location(in: self.view)
       cornersImage = Corners(point: lastPoint)
     }
@@ -253,7 +288,6 @@ open class MainViewController: UIViewController {
       self.drawLineFrom(fromPoint: self.lastPoint, toPoint: self.lastPoint)
       checkCorners(point: lastPoint)
     }
-
     // Merge tempImageView into mainImageView
     UIGraphicsBeginImageContext(self.mainImageView.frame.size)
     self.mainImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height), blendMode: CGBlendMode.normal, alpha: 1.0)
@@ -265,6 +299,10 @@ open class MainViewController: UIViewController {
       imageView.isUserInteractionEnabled = true
       let width = cornersImage.right - cornersImage.left
       let height = cornersImage.up - cornersImage.down
+      if width == 0 && height == 0 {
+        tempImageView.image = nil
+        return
+      }
       imageView.frame.size = CGSize(width: width, height: height)
       imageView.image = imageView.image?.cropToBounds(posX: cornersImage.left,
                                                       posY: cornersImage.down,
@@ -276,10 +314,14 @@ open class MainViewController: UIViewController {
                                        y: point.y - imageView.frame.size.height / 2)
       savedImageViews.append(imageView)
     }
-    self.tempImageView.image = nil
+    tempImageView.image = nil
   }
+}
 
+// MARK: - Setup Guides
+extension MainViewController {
   func showGuide() {
+    removeAllButtonPressed()
     stopGuideAnimation()
     invalidateTimer()
     if isAnimate {
@@ -293,6 +335,7 @@ open class MainViewController: UIViewController {
     view.addSubview(label)
     view.addSubview(arrowButton)
     let timeOfAnimation: TimeInterval = 1.7
+
     UIView.animate(withDuration: timeOfAnimation, animations: {
       animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 200, y: animationImageView.frame.origin.y - 100)
       arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
@@ -321,6 +364,9 @@ open class MainViewController: UIViewController {
         arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
       })
     }
+    //    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
+    //      self.showGuide()
+    //    }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         label.alpha = 0
@@ -341,7 +387,14 @@ open class MainViewController: UIViewController {
         imageView.removeFromSuperview()
       }
       if let label = animateGuide.label {
-        label.removeFromSuperview()
+        label.setTitle("Cool!", for: .normal)
+        let timeOfAnimation = 1.7
+        UIView.animate(withDuration: timeOfAnimation, animations: {
+          label.alpha = 0
+          DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
+            label.removeFromSuperview()
+          }
+        })
       }
       if let arrowButton = animateGuide.arrowButton {
         arrowButton.removeFromSuperview()
