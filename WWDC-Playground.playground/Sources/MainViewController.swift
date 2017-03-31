@@ -187,6 +187,7 @@ open class MainViewController: UIViewController {
     pointsAnimation.removeAll()
     invalidateTimer()
     swiped = false
+    UIView.commitAnimations()
 //    removeArrowButton()
     lastPoint = .zero
   }
@@ -400,11 +401,11 @@ extension MainViewController {
       }, completion: nil)
     }
 
-    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * Double(points.count), options: .allowAnimatedContent, animations: {
-      self.arrowButton.alpha = 0
-    }, completion: { _ in
-      self.removeArrowButton()
-    })
+//    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * Double(points.count), options: .allowAnimatedContent, animations: {
+//      self.arrowButton.alpha = 0
+//    }, completion: { _ in
+//      self.removeArrowButton()
+//    })
   }
 
   func removeArrowButton() {
