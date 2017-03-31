@@ -16,7 +16,7 @@ open class MainViewController: UIViewController {
   var colorPicker: ChromaColorPicker!
   var mainImageView: UIImageView!
   var tempImageView: UIImageView!
-  var sizeOfColorPicker: CGFloat = 200.0
+  var sizeOfColorPicker: CGFloat = 150.0
   var savedImageViews = [UIImageView]() {
     didSet {
       animateButton.isEnabled = savedImageViews.count > 0 ? true : false
@@ -35,15 +35,10 @@ open class MainViewController: UIViewController {
   var timer: Timer!
   var index: Int = 1
 
+  var arrowButton: UIButton!
   var lineImageView: UIImageView! {
     didSet {
       lineImageView.image = UIImage.init(named: "Images/lineIcon.png")
-    }
-  }
-  var beginButton: ActionButton! {
-    didSet {
-      beginButton.setImage(UIImage.init(named: "Images/begin.png"), for: .normal)
-      beginButton.addTarget(self, action: #selector(beginButtonPressed), for: .touchUpInside)
     }
   }
   var penButton: ActionButton! {
@@ -79,7 +74,7 @@ open class MainViewController: UIViewController {
   }
   var beginAnimationButton: ActionButton! {
     didSet {
-      beginAnimationButton.setImage(UIImage.init(named: "Images/playIcon.png"), for: .normal)
+      beginAnimationButton.setImage(UIImage.init(named: "Images/begin.png"), for: .normal)
       beginAnimationButton.addTarget(self, action: #selector(beginAnimationButtonPressed(_:)), for: .touchUpInside)
       beginAnimationButton.isEnabled = false
     }
@@ -106,22 +101,17 @@ open class MainViewController: UIViewController {
       let height = width
       animateGuide.button = UIButton(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
       animateGuide.button.setImage(UIImage.init(named: "Images/drawingPen.png"), for: .normal)
-      animateGuide.label = UIButton(frame: CGRect(x: view.center.x - width * 2, y: point.y - height * 2.5, width: width * 4, height: 40))
+      animateGuide.label = UIButton(frame: CGRect(x: view.center.x - width * 2, y: point.y - height * 3, width: width * 4, height: 40))
       animateGuide.label.setTitle("Draw something like me", for: .normal)
       animateGuide.label.titleLabel?.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
       animateGuide.label.setTitleColor(.gray, for: .normal)
-      animateGuide.arrowButton = UIButton(frame: CGRect(x: 270, y: 50, width: 70, height: 70))
-      animateGuide.arrowButton.setImage(UIImage.init(named: "Images/arrow.png"), for: .normal)
     }
   }
 
   override open func viewDidLoad() {
     super.viewDidLoad()
     self.view.backgroundColor = .white
-    beginButton = ActionButton()
-    beginButton.frame.size = CGSize(width: 200, height: 200)
-    beginButton.center = view.center
-    view.addSubview(beginButton)
+    start()
   }
 
   func start() {
@@ -130,21 +120,22 @@ open class MainViewController: UIViewController {
   }
 
   func registerComponents() {
-    instrumentsView = UIView(frame: CGRect(origin: view.frame.origin, size: CGSize(width: view.frame.size.width, height: 240)))
+    instrumentsView = UIView(frame: CGRect(origin: view.frame.origin, size: CGSize(width: view.frame.size.width, height: 180)))
     instrumentsView.backgroundColor = view.backgroundColor //UIColor.lightGray
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
-    penButton = ActionButton(frame: CGRect(x: 200, y: 10, width: 100, height: 150))
+    penButton = ActionButton(frame: CGRect(x: 180, y: 20, width: 100, height: sizeOfColorPicker - 20))
 //    eraserButton = ActionButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
-    animateButton = ActionButton(frame: CGRect(x: 300, y: 10, width: 120, height: 120))
-    removeAllButton = ActionButton(frame: CGRect(x: 220, y: 175, width: 60, height: 60))
-    beginAnimationButton = ActionButton(frame: CGRect(x: 430, y: 10, width: 120, height: 120))
-    guideButton = ActionButton(frame: CGRect(x: 300, y: 175, width: 60, height: 60))
+    animateButton = ActionButton(frame: CGRect(x: 270, y: 40, width: sizeOfColorPicker - 50, height: sizeOfColorPicker - 50))
+    beginAnimationButton = ActionButton(frame: CGRect(x: 370, y: 45, width: sizeOfColorPicker - 60, height: sizeOfColorPicker - 60))
+    removeAllButton = ActionButton(frame: CGRect(x: 470, y: 40, width: sizeOfColorPicker - 50, height: sizeOfColorPicker - 50))
+    guideButton = ActionButton(frame: CGRect(x: 570, y: 40, width: sizeOfColorPicker - 50, height: sizeOfColorPicker - 50))
     lineImageView = UIImageView(frame: CGRect(x: instrumentsView.frame.origin.x,
                                               y: instrumentsView.frame.size.height - 16,
                                               width: instrumentsView.frame.size.width, height: 30))
     sizeSlider = UISlider()
-    sizeSlider.frame.origin = CGPoint(x: 80, y: 200)
+    sizeSlider.transform = CGAffineTransform(rotationAngle: CGFloat(Double.pi / 2))
+    sizeSlider.frame.origin = CGPoint(x: 170, y: 40)
     view.addSubview(mainImageView!)
     view.addSubview(tempImageView!)
     instrumentsView.addSubview(penButton)
@@ -160,7 +151,7 @@ open class MainViewController: UIViewController {
   }
 
   func addColorPicker() {
-    colorPicker = ChromaColorPicker(frame: CGRect(x: 30, y: 10, width: sizeOfColorPicker, height: sizeOfColorPicker))
+    colorPicker = ChromaColorPicker(frame: CGRect(x: 30, y: 12, width: sizeOfColorPicker, height: sizeOfColorPicker))
     colorPicker.delegate = self
     colorPicker.padding = 10
     colorPicker.stroke = 3
@@ -206,6 +197,7 @@ open class MainViewController: UIViewController {
 
   func animateButtonPressed(_ sender: UIButton) {
     mainImageView.image = nil
+//    mainImageView.loadGif(name: <#T##String#>)
     isAnimate = !isAnimate
     stopGuideAnimation()
     guard savedImageViews.count > 0 else { return }
@@ -214,6 +206,12 @@ open class MainViewController: UIViewController {
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
     invalidateTimer()
+    var points = [CGPoint]()
+    points.append(contentsOf: [
+      CGPoint(x: 300, y: 500),
+      CGPoint(x: 600, y: 500)
+      ])
+//    showArrow(x: view.center.x, y: view.center.y, image: UIImage.init(named: "Images/hand.png")!, points: points, timeOfAnimation: 1.7)
     pointsAnimation.removeAll()
     pointsAnimation.append(SavePoint(point: CGPoint(), timeBefore: Date().timeIntervalSince1970, owner: UIImageView()))
   }
@@ -225,11 +223,6 @@ open class MainViewController: UIViewController {
     index = 1
     invalidateTimer()
     timer = Timer.scheduledTimer(timeInterval: timeOfAnimation, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
-  }
-
-  func beginButtonPressed() {
-    self.beginButton.removeFromSuperview()
-    self.start()
   }
 
   func updateTimer() {
@@ -330,53 +323,47 @@ extension MainViewController {
     animateGuide = AnimationGuide()
     let animationImageView = animateGuide.button!
     let label = animateGuide.label!
-    let arrowButton = animateGuide.arrowButton!
     view.addSubview(animationImageView)
     view.addSubview(label)
-    view.addSubview(arrowButton)
     let timeOfAnimation: TimeInterval = 1.7
-
+//    showArrow(x: 270, y: 30, image: UIImage.init(named: "Images/arrow.png")!,
+//              points: [CGPoint(x: 290, y: 30), CGPoint(x: 270, y: 30), CGPoint(x: 290, y: 30),
+//                       CGPoint(x: 270, y: 30), CGPoint(x: 290, y: 30)], timeOfAnimation: timeOfAnimation)
     UIView.animate(withDuration: timeOfAnimation, animations: {
       animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 200, y: animationImageView.frame.origin.y - 100)
-      arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
     })
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x + 300, y: animationImageView.frame.origin.y)
-        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x - 20, y: arrowButton.frame.origin.y)
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 2) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y + 300)
-        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 3) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 300, y: animationImageView.frame.origin.y)
-        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x - 20, y: arrowButton.frame.origin.y)
       })
     }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 4) {
       UIView.animate(withDuration: timeOfAnimation, animations: {
         animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y - 300)
-        arrowButton.frame.origin = CGPoint(x: arrowButton.frame.origin.x + 20, y: arrowButton.frame.origin.y)
       })
     }
     //    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
     //      self.showGuide()
     //    }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
+//      self.isShowingArrow = false
       UIView.animate(withDuration: timeOfAnimation, animations: {
         label.alpha = 0
         animationImageView.alpha = 0
-        arrowButton.alpha = 0
       })
       DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
         label.removeFromSuperview()
         animationImageView.removeFromSuperview()
-        arrowButton.removeFromSuperview()
       }
     }
   }
@@ -388,7 +375,7 @@ extension MainViewController {
       }
       if let label = animateGuide.label {
         label.setTitle("Cool!", for: .normal)
-        let timeOfAnimation = 1.7
+        let timeOfAnimation = 2.0
         UIView.animate(withDuration: timeOfAnimation, animations: {
           label.alpha = 0
           DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
@@ -396,11 +383,29 @@ extension MainViewController {
           }
         })
       }
-      if let arrowButton = animateGuide.arrowButton {
-        arrowButton.removeFromSuperview()
-      }
+//      isShowingArrow = false
     }
   }
+
+//  func showArrow(x: CGFloat, y: CGFloat, image: UIImage, points: [CGPoint], timeOfAnimation: TimeInterval) {
+//    isShowingArrow = true
+//    arrowButton = UIButton(frame: CGRect(x: x, y: y, width: 70, height: 70))
+//    arrowButton.setImage(image, for: .normal)
+//    view.addSubview(arrowButton)
+//    for i in 0..<points.count {
+//      DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * Double(i)) {
+//        if self.isShowingArrow{
+//          UIView.animate(withDuration: timeOfAnimation, animations: {
+//            self.arrowButton.frame.origin = points[i]
+//          })
+//        }
+//      }
+//    }
+//    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * Double(points.count)) {
+//      self.isShowingArrow = false
+//    }
+//  }
+
 }
 
 // MARK: - Working with images
@@ -452,7 +457,7 @@ extension MainViewController: ChromaColorPickerDelegate{
     UIView.animate(withDuration: 0.2,
                    animations: {
                     self.view.transform = CGAffineTransform(scaleX: 1.05, y: 1.05)
-    }, completion: { done in
+    }, completion: { _ in
       UIView.animate(withDuration: 0.2, animations: {
         self.view.transform = CGAffineTransform.identity
       })
