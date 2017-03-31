@@ -21,6 +21,16 @@ open class MainViewController: UIViewController {
     didSet {
       animateButton.isEnabled = savedImageViews.count > 0 ? true : false
       stopGuideAnimation()
+      if savedImageViews.count == 1 {
+        let points: [CGPoint] = [
+          CGPoint(x: 360, y: 40),
+          CGPoint(x: 390, y: 40),
+          CGPoint(x: 360, y: 40),
+          CGPoint(x: 390, y: 40),
+          CGPoint(x: 360, y: 40)
+        ]
+        showArrow(x: 390, y: 40, image: UIImage.init(named: "Images/arrow.png")!, points: points, timeOfAnimation: 1.5, textLabel: "Tap on button 'Animate'")
+      }
     }
   }
   var isAnimate: Bool = false
@@ -30,6 +40,17 @@ open class MainViewController: UIViewController {
   var pointsAnimation = [SavePoint]() {
     didSet {
       beginAnimationButton.isEnabled = pointsAnimation.count > 1 ? true : false
+      if pointsAnimation.count == 25 {
+        removeArrowButton()
+        let points: [CGPoint] = [
+          CGPoint(x: 500, y: 50),
+          CGPoint(x: 470, y: 50),
+          CGPoint(x: 500, y: 50),
+          CGPoint(x: 470, y: 50),
+          CGPoint(x: 500, y: 50)
+        ]
+        showArrow(x: 470, y: 50, image: UIImage.init(named: "Images/arrow.png")!, points: points, timeOfAnimation: 1.5, textLabel: "Tap on button 'Begin Animation'")
+      }
     }
   }
   var timer: Timer!
@@ -180,6 +201,9 @@ open class MainViewController: UIViewController {
     savedImageViews.removeAll()
     pointsAnimation.removeAll()
     invalidateTimer()
+    swiped = false
+//    removeArrowButton()
+    lastPoint = .zero
   }
 
   func demoAnimationButtonPressed() {
@@ -197,21 +221,20 @@ open class MainViewController: UIViewController {
 
   func animateButtonPressed(_ sender: UIButton) {
     mainImageView.image = nil
-//    mainImageView.loadGif(name: <#T##String#>)
     isAnimate = !isAnimate
     stopGuideAnimation()
+    removeArrowButton()
     guard savedImageViews.count > 0 else { return }
     for imageView in savedImageViews {
       //      imageView.frame.origin = imageView.center
       isAnimate ? self.view.addSubview(imageView) : imageView.removeFromSuperview()
     }
     invalidateTimer()
-    var points = [CGPoint]()
-    points.append(contentsOf: [
-      CGPoint(x: 300, y: 500),
-      CGPoint(x: 600, y: 500)
-      ])
-//    showArrow(x: view.center.x, y: view.center.y, image: UIImage.init(named: "Images/hand.png")!, points: points, timeOfAnimation: 1.7)
+    let points: [CGPoint] = [
+      CGPoint(x: view.center.x - 200, y: view.center.y),
+      CGPoint(x: view.center.x + 200, y: view.center.y),
+      CGPoint(x: view.center.x - 100, y: view.center.y)]
+    showArrow(x: view.center.x, y: view.center.y, image: UIImage.init(named: "Images/hand.png")!, points: points, timeOfAnimation: 1.3, textLabel: "Drag images")
     pointsAnimation.removeAll()
     pointsAnimation.append(SavePoint(point: CGPoint(), timeBefore: Date().timeIntervalSince1970, owner: UIImageView()))
   }
@@ -322,9 +345,11 @@ extension MainViewController {
     }
     animateGuide = AnimationGuide()
     let animationImageView = animateGuide.button!
-    let label = animateGuide.label!
-    view.addSubview(animationImageView)
+    guard let label = animateGuide.label else {
+      return
+    }
     view.addSubview(label)
+    view.addSubview(animationImageView)
     let timeOfAnimation: TimeInterval = 1.7
 //    showArrow(x: 270, y: 30, image: UIImage.init(named: "Images/arrow.png")!,
 //              points: [CGPoint(x: 290, y: 30), CGPoint(x: 270, y: 30), CGPoint(x: 290, y: 30),
@@ -356,7 +381,6 @@ extension MainViewController {
     //      self.showGuide()
     //    }
     DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
-//      self.isShowingArrow = false
       UIView.animate(withDuration: timeOfAnimation, animations: {
         label.alpha = 0
         animationImageView.alpha = 0
@@ -378,33 +402,46 @@ extension MainViewController {
         let timeOfAnimation = 2.0
         UIView.animate(withDuration: timeOfAnimation, animations: {
           label.alpha = 0
-          DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
-            label.removeFromSuperview()
-          }
+        }, completion: { _ in
+          label.removeFromSuperview()
         })
       }
-//      isShowingArrow = false
     }
   }
 
-//  func showArrow(x: CGFloat, y: CGFloat, image: UIImage, points: [CGPoint], timeOfAnimation: TimeInterval) {
-//    isShowingArrow = true
-//    arrowButton = UIButton(frame: CGRect(x: x, y: y, width: 70, height: 70))
-//    arrowButton.setImage(image, for: .normal)
-//    view.addSubview(arrowButton)
-//    for i in 0..<points.count {
-//      DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * Double(i)) {
-//        if self.isShowingArrow{
-//          UIView.animate(withDuration: timeOfAnimation, animations: {
-//            self.arrowButton.frame.origin = points[i]
-//          })
-//        }
-//      }
-//    }
-//    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * Double(points.count)) {
-//      self.isShowingArrow = false
-//    }
-//  }
+  func showArrow(x: CGFloat, y: CGFloat, image: UIImage, points: [CGPoint], timeOfAnimation: TimeInterval, textLabel: String?) {
+    removeArrowButton()
+    if let textLabel = textLabel {
+      animateGuide.label.setTitle(textLabel, for: .normal)
+      animateGuide.label.alpha = 1
+      view.addSubview(animateGuide.label)
+    }
+    arrowButton = UIButton(frame: CGRect(x: x, y: y, width: 70, height: 70))
+    arrowButton.setImage(image, for: .normal)
+    view.addSubview(arrowButton)
+    for i in 0..<points.count {
+      UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * Double(i), options: .allowAnimatedContent, animations: {
+        self.arrowButton.frame.origin = points[i]
+      }, completion: nil)
+    }
+    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * Double(points.count)) {
+      UIView.animate(withDuration: timeOfAnimation, animations: {
+        self.arrowButton.alpha = 0
+      }, completion: { _ in
+        self.removeArrowButton()
+      })
+    }
+  }
+
+  func removeArrowButton() {
+    UIView.commitAnimations()
+    if let arrow = self.arrowButton {
+      arrow.removeFromSuperview()
+    }
+    if let label = animateGuide.label {
+      label.removeFromSuperview()
+    }
+  }
 
 }
 
