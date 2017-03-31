@@ -17,6 +17,13 @@ open class MainViewController: UIViewController {
   var mainImageView: UIImageView!
   var tempImageView: UIImageView!
   var sizeOfColorPicker: CGFloat = 150.0
+  var isAnimate: Bool = false
+  var cornersImage = Corners()
+  var instrumentsView = UIView()
+  var timer: Timer!
+  var index: Int = 1
+  var arrowButton: UIButton!
+
   var savedImageViews = [UIImageView]() {
     didSet {
       animateButton.isEnabled = savedImageViews.count > 0 ? true : false
@@ -33,10 +40,7 @@ open class MainViewController: UIViewController {
       }
     }
   }
-  var isAnimate: Bool = false
-  var cornersImage = Corners()
-  var instrumentsView = UIView()
-  var isClearing: Bool = false
+
   var pointsAnimation = [SavePoint]() {
     didSet {
       beginAnimationButton.isEnabled = pointsAnimation.count > 1 ? true : false
@@ -53,10 +57,6 @@ open class MainViewController: UIViewController {
       }
     }
   }
-  var timer: Timer!
-  var index: Int = 1
-
-  var arrowButton: UIButton!
   var lineImageView: UIImageView! {
     didSet {
       lineImageView.image = UIImage.init(named: "Images/lineIcon.png")
@@ -68,22 +68,10 @@ open class MainViewController: UIViewController {
       penButton.addTarget(self, action: #selector(penButtonPressed(_:)), for: .touchUpInside)
     }
   }
-//  var eraserButton: ActionButton! {
-//    didSet {
-//      eraserButton.setImage(UIImage.init(named: "Images/eraser.png"), for: .normal)
-//      eraserButton.addTarget(self, action: #selector(eraserButtonPressed(_:)), for: .touchUpInside)
-//    }
-//  }
   var removeAllButton: ActionButton! {
     didSet {
       removeAllButton.setImage(UIImage.init(named: "Images/remove.png"), for: .normal)
       removeAllButton.addTarget(self, action: #selector(removeAllButtonPressed), for: .touchUpInside)
-    }
-  }
-  var demoAnimationButton: ActionButton! {
-    didSet {
-      demoAnimationButton.setImage(UIImage.init(named: "Images/demo.png"), for: .normal)
-      demoAnimationButton.addTarget(self, action: #selector(demoAnimationButtonPressed), for: .touchUpInside)
     }
   }
   var animateButton: ActionButton! {
@@ -125,28 +113,30 @@ open class MainViewController: UIViewController {
       animateGuide.label = UIButton(frame: CGRect(x: view.center.x - width * 2, y: point.y - height * 3, width: width * 4, height: 40))
       animateGuide.label.setTitle("Draw something like me", for: .normal)
       animateGuide.label.titleLabel?.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
-      animateGuide.label.setTitleColor(.gray, for: .normal)
+      animateGuide.label.setTitleColor(.darkGray, for: .normal)
     }
   }
 
+  // MARK: - ViewDidLoad()
+  // ------------- VIEW DID LOAD ---------------- //
   override open func viewDidLoad() {
     super.viewDidLoad()
     self.view.backgroundColor = .white
-    start()
+    startExecude()
   }
 
-  func start() {
+  func startExecude() {
     registerComponents()
     showGuide()
   }
 
   func registerComponents() {
     instrumentsView = UIView(frame: CGRect(origin: view.frame.origin, size: CGSize(width: view.frame.size.width, height: 180)))
-    instrumentsView.backgroundColor = view.backgroundColor //UIColor.lightGray
+    instrumentsView.backgroundColor = view.backgroundColor
     mainImageView = UIImageView(frame: self.view.frame)
     tempImageView = UIImageView(frame: self.view.frame)
+    // registering components
     penButton = ActionButton(frame: CGRect(x: 180, y: 20, width: 100, height: sizeOfColorPicker - 20))
-//    eraserButton = ActionButton(frame: CGRect(x: 300, y: 10, width: 50, height: 150))
     animateButton = ActionButton(frame: CGRect(x: 270, y: 40, width: sizeOfColorPicker - 50, height: sizeOfColorPicker - 50))
     beginAnimationButton = ActionButton(frame: CGRect(x: 370, y: 45, width: sizeOfColorPicker - 60, height: sizeOfColorPicker - 60))
     removeAllButton = ActionButton(frame: CGRect(x: 470, y: 40, width: sizeOfColorPicker - 50, height: sizeOfColorPicker - 50))
@@ -157,10 +147,10 @@ open class MainViewController: UIViewController {
     sizeSlider = UISlider()
     sizeSlider.transform = CGAffineTransform(rotationAngle: CGFloat(Double.pi / 2))
     sizeSlider.frame.origin = CGPoint(x: 170, y: 40)
+    // adding on view
     view.addSubview(mainImageView!)
     view.addSubview(tempImageView!)
     instrumentsView.addSubview(penButton)
-//    instrumentsView.addSubview(eraserButton)
     instrumentsView.addSubview(animateButton)
     instrumentsView.addSubview(beginAnimationButton)
     instrumentsView.addSubview(sizeSlider)
@@ -182,11 +172,6 @@ open class MainViewController: UIViewController {
 
   func penButtonPressed(_ sender: UIButton) {
     brushWidth = 10.0
-    isClearing = false
-  }
-
-  func eraserButtonPressed(_ sender: UIButton) {
-    isClearing = !isClearing
   }
 
   func removeAllButtonPressed() {
@@ -204,15 +189,6 @@ open class MainViewController: UIViewController {
     swiped = false
 //    removeArrowButton()
     lastPoint = .zero
-  }
-
-  func demoAnimationButtonPressed() {
-    let imageBoy = UIImageView(frame: CGRect(x: 100, y: 600, width: 100, height: 250))
-    let imageBall = UIImageView(frame: CGRect(x: 200, y: 600, width: 100, height: 250))
-    let imageWall = UIImageView(frame: CGRect(x: 500, y: 600, width: 100, height: 250))
-    savedImageViews.append(imageBoy)
-    savedImageViews.append(imageBall)
-    savedImageViews.append(imageWall)
   }
 
   func sliderValueDidChanged(_ sender: UISlider) {
@@ -242,10 +218,21 @@ open class MainViewController: UIViewController {
   func beginAnimationButtonPressed(_ sender: UIButton) {
     guard pointsAnimation.count > 1 else { return }
     isAnimate = false
+    removeArrowButton()
     stopGuideAnimation()
     index = 1
     invalidateTimer()
     timer = Timer.scheduledTimer(timeInterval: timeOfAnimation, target: self, selector: #selector(updateTimer), userInfo: nil, repeats: true)
+  }
+
+  func backButtonPressed() {
+    guard savedImageViews.count > 0 && !isAnimate else {
+      return
+    }
+    for imageView in savedImageViews {
+      imageView.removeFromSuperview()
+    }
+    savedImageViews.removeAll()
   }
 
   func updateTimer() {
@@ -275,10 +262,10 @@ open class MainViewController: UIViewController {
     super.touchesBegan(touches, with: event)
     if isAnimate { return }
     invalidateTimer()
-    self.swiped = false
+    swiped = false
     if let touch = touches.first {
       if touch.location(in: self.view).y < 240 { return }
-      self.lastPoint = touch.location(in: self.view)
+      lastPoint = touch.location(in: self.view)
       cornersImage = Corners(point: lastPoint)
     }
   }
@@ -287,11 +274,11 @@ open class MainViewController: UIViewController {
     super.touchesMoved(touches, with: event)
     if isAnimate { return }
     invalidateTimer()
-    self.swiped = true
+    swiped = true
     if let touch = touches.first {
       let currentPoint = touch.location(in: self.view)
-      self.drawLineFrom(fromPoint: self.lastPoint, toPoint: currentPoint)
-      self.lastPoint = currentPoint
+      drawLineFrom(fromPoint: self.lastPoint, toPoint: currentPoint)
+      lastPoint = currentPoint
       checkCorners(point: lastPoint)
     }
   }
@@ -300,15 +287,15 @@ open class MainViewController: UIViewController {
     super.touchesEnded(touches, with: event)
     if isAnimate { return }
     invalidateTimer()
-    if !self.swiped {
-      self.drawLineFrom(fromPoint: self.lastPoint, toPoint: self.lastPoint)
+    if !swiped {
+      self.drawLineFrom(fromPoint: lastPoint, toPoint: lastPoint)
       checkCorners(point: lastPoint)
     }
     // Merge tempImageView into mainImageView
     UIGraphicsBeginImageContext(self.mainImageView.frame.size)
-    self.mainImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height), blendMode: CGBlendMode.normal, alpha: 1.0)
-    self.tempImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height), blendMode: CGBlendMode.normal, alpha: self.opacity)
-    self.mainImageView.image = UIGraphicsGetImageFromCurrentImageContext()
+    mainImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height), blendMode: CGBlendMode.normal, alpha: 1.0)
+    tempImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height), blendMode: CGBlendMode.normal, alpha: self.opacity)
+    mainImageView.image = UIGraphicsGetImageFromCurrentImageContext()
     UIGraphicsEndImageContext()
     if let image = tempImageView.image {
       let imageView = UIImageView(image: image)
@@ -336,6 +323,7 @@ open class MainViewController: UIViewController {
 
 // MARK: - Setup Guides
 extension MainViewController {
+
   func showGuide() {
     removeAllButtonPressed()
     stopGuideAnimation()
@@ -351,48 +339,35 @@ extension MainViewController {
     view.addSubview(label)
     view.addSubview(animationImageView)
     let timeOfAnimation: TimeInterval = 1.7
-//    showArrow(x: 270, y: 30, image: UIImage.init(named: "Images/arrow.png")!,
-//              points: [CGPoint(x: 290, y: 30), CGPoint(x: 270, y: 30), CGPoint(x: 290, y: 30),
-//                       CGPoint(x: 270, y: 30), CGPoint(x: 290, y: 30)], timeOfAnimation: timeOfAnimation)
     UIView.animate(withDuration: timeOfAnimation, animations: {
       animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 200, y: animationImageView.frame.origin.y - 100)
     })
-    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
-      UIView.animate(withDuration: timeOfAnimation, animations: {
-        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x + 300, y: animationImageView.frame.origin.y)
-      })
-    }
-    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 2) {
-      UIView.animate(withDuration: timeOfAnimation, animations: {
-        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y + 300)
-      })
-    }
-    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 3) {
-      UIView.animate(withDuration: timeOfAnimation, animations: {
-        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 300, y: animationImageView.frame.origin.y)
-      })
-    }
-    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 4) {
-      UIView.animate(withDuration: timeOfAnimation, animations: {
-        animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y - 300)
-      })
-    }
+    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation, options: .allowAnimatedContent, animations: {
+      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x + 300, y: animationImageView.frame.origin.y)
+    }, completion: nil)
+    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 2, options: .allowAnimatedContent, animations: {
+      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y + 300)
+    }, completion: nil)
+    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 3, options: .allowAnimatedContent, animations: {
+      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 300, y: animationImageView.frame.origin.y)
+    }, completion: nil)
+    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 4, options: .allowAnimatedContent, animations: {
+      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y - 300)
+    }, completion: nil)
     //    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
     //      self.showGuide()
     //    }
-    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
-      UIView.animate(withDuration: timeOfAnimation, animations: {
-        label.alpha = 0
-        animationImageView.alpha = 0
-      })
-      DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation) {
-        label.removeFromSuperview()
-        animationImageView.removeFromSuperview()
-      }
-    }
+    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 5, options: .allowAnimatedContent, animations: {
+      label.alpha = 0
+      animationImageView.alpha = 0
+    }, completion: { _ in
+      label.removeFromSuperview()
+      animationImageView.removeFromSuperview()
+    })
   }
 
   func stopGuideAnimation() {
+    UIView.commitAnimations()
     if let animateGuide = animateGuide {
       if let imageView = animateGuide.button {
         imageView.removeFromSuperview()
@@ -424,13 +399,12 @@ extension MainViewController {
         self.arrowButton.frame.origin = points[i]
       }, completion: nil)
     }
-    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * Double(points.count)) {
-      UIView.animate(withDuration: timeOfAnimation, animations: {
-        self.arrowButton.alpha = 0
-      }, completion: { _ in
-        self.removeArrowButton()
-      })
-    }
+
+    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * Double(points.count), options: .allowAnimatedContent, animations: {
+      self.arrowButton.alpha = 0
+    }, completion: { _ in
+      self.removeArrowButton()
+    })
   }
 
   func removeArrowButton() {
@@ -469,13 +443,13 @@ extension MainViewController {
     UIGraphicsBeginImageContext(self.view.frame.size)
     let context = UIGraphicsGetCurrentContext()
     self.tempImageView.image?.draw(in: CGRect(x: 0, y: 0, width: self.view.frame.size.width, height: self.view.frame.size.height))
-    let blend: CGBlendMode = isClearing ? .clear : .normal
+//    let blend: CGBlendMode = isClearing ? .clear : .normal
     context?.move(to: fromPoint)
     context?.addLine(to: toPoint)
     context?.setLineCap(CGLineCap.round)
     context?.setLineWidth(self.brushWidth)
     context?.setStrokeColor(red: self.red, green: self.green, blue: self.blue, alpha: 1.0)
-    context?.setBlendMode(blend)
+//    context?.setBlendMode(blend)
     context?.strokePath()
 
     self.tempImageView.image = UIGraphicsGetImageFromCurrentImageContext()
