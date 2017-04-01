@@ -18,12 +18,24 @@ open class MainViewController: UIViewController {
   var tempImageView: UIImageView!
   var sizeOfColorPicker: CGFloat = 150.0
   var isAnimate: Bool = false
+  var needShowGuide: Bool = true
   var cornersImage = Corners()
   var instrumentsView = UIView()
   var timer: Timer!
   var index: Int = 1
   var arrowButton: UIButton!
 
+  var titleLabelButton: UIButton! {
+    didSet {
+      titleLabelButton.titleLabel?.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
+      titleLabelButton.setTitleColor(.darkGray, for: .normal)
+    }
+  }
+  var guidePenButton: UIButton! {
+    didSet {
+      guidePenButton.setImage(UIImage.init(named: "Images/drawingPen.png"), for: .normal)
+    }
+  }
   var savedImageViews = [UIImageView]() {
     didSet {
       animateButton.isEnabled = savedImageViews.count > 0 ? true : false
@@ -40,7 +52,6 @@ open class MainViewController: UIViewController {
       }
     }
   }
-
   var pointsAnimation = [SavePoint]() {
     didSet {
       beginAnimationButton.isEnabled = pointsAnimation.count > 1 ? true : false
@@ -101,19 +112,6 @@ open class MainViewController: UIViewController {
     didSet {
       guideButton.setImage(UIImage.init(named: "Images/guide.png"), for: .normal)
       guideButton.addTarget(self, action: #selector(showGuide), for: .touchUpInside)
-    }
-  }
-  var animateGuide: AnimationGuide! {
-    didSet {
-      let point = view.center
-      let width: CGFloat = 100
-      let height = width
-      animateGuide.button = UIButton(frame: CGRect(x: point.x - width / 2, y: point.y - height / 2, width: width, height: height))
-      animateGuide.button.setImage(UIImage.init(named: "Images/drawingPen.png"), for: .normal)
-      animateGuide.label = UIButton(frame: CGRect(x: view.center.x - width * 2, y: point.y - height * 3, width: width * 4, height: 40))
-      animateGuide.label.setTitle("Draw something like me", for: .normal)
-      animateGuide.label.titleLabel?.font = UIFont(name: "HelveticaNeue-UltraLight", size: 30)
-      animateGuide.label.setTitleColor(.darkGray, for: .normal)
     }
   }
 
@@ -187,8 +185,6 @@ open class MainViewController: UIViewController {
     pointsAnimation.removeAll()
     invalidateTimer()
     swiped = false
-    UIView.commitAnimations()
-//    removeArrowButton()
     lastPoint = .zero
   }
 
@@ -219,6 +215,7 @@ open class MainViewController: UIViewController {
   func beginAnimationButtonPressed(_ sender: UIButton) {
     guard pointsAnimation.count > 1 else { return }
     isAnimate = false
+    needShowGuide = false
     removeArrowButton()
     stopGuideAnimation()
     index = 1
@@ -332,65 +329,53 @@ extension MainViewController {
     if isAnimate {
       return
     }
-    animateGuide = AnimationGuide()
-    let animationImageView = animateGuide.button!
-    guard let label = animateGuide.label else {
-      return
-    }
-    view.addSubview(label)
-    view.addSubview(animationImageView)
+    needShowGuide = true
+    let point = view.center
+    let width: CGFloat = 100
+    let height = width
+
+    let mainX = point.x - width / 2
+    let mainY = point.y - height / 2
+
+    let points: [CGPoint] = [
+      CGPoint(x: mainX - 200, y: mainY - 100),
+      CGPoint(x: mainX + 100, y: mainY - 100),
+      CGPoint(x: mainX + 100, y: mainY + 200),
+      CGPoint(x: mainX - 200, y: mainY + 200),
+      CGPoint(x: mainX - 200, y: mainY - 100)
+    ]
     let timeOfAnimation: TimeInterval = 1.7
-    UIView.animate(withDuration: timeOfAnimation, animations: {
-      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 200, y: animationImageView.frame.origin.y - 100)
-    })
-    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation, options: .allowAnimatedContent, animations: {
-      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x + 300, y: animationImageView.frame.origin.y)
-    }, completion: nil)
-    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 2, options: .allowAnimatedContent, animations: {
-      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y + 300)
-    }, completion: nil)
-    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 3, options: .allowAnimatedContent, animations: {
-      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x - 300, y: animationImageView.frame.origin.y)
-    }, completion: nil)
-    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 4, options: .allowAnimatedContent, animations: {
-      animationImageView.frame.origin = CGPoint(x: animationImageView.frame.origin.x, y: animationImageView.frame.origin.y - 300)
-    }, completion: nil)
-    //    DispatchQueue.main.asyncAfter(deadline: .now() + timeOfAnimation * 5) {
-    //      self.showGuide()
-    //    }
-    UIView.animate(withDuration: timeOfAnimation, delay: timeOfAnimation * 5, options: .allowAnimatedContent, animations: {
-      label.alpha = 0
-      animationImageView.alpha = 0
-    }, completion: { _ in
-      label.removeFromSuperview()
-      animationImageView.removeFromSuperview()
-    })
+    showArrow(x: mainX, y: mainY,
+              image: UIImage.init(named: "Images/drawingPen.png")!,
+              points: points, timeOfAnimation: timeOfAnimation, textLabel: "Draw something like me")
   }
 
   func stopGuideAnimation() {
     UIView.commitAnimations()
-    if let animateGuide = animateGuide {
-      if let imageView = animateGuide.button {
-        imageView.removeFromSuperview()
-      }
-      if let label = animateGuide.label {
-        label.setTitle("Cool!", for: .normal)
-        let timeOfAnimation = 2.0
-        UIView.animate(withDuration: timeOfAnimation, animations: {
-          label.alpha = 0
-        }, completion: { _ in
-          label.removeFromSuperview()
-        })
-      }
+    if let imageView = guidePenButton {
+      imageView.removeFromSuperview()
+    }
+    if let label = titleLabelButton {
+      label.setTitle("Cool!", for: .normal)
+      UIView.animate(withDuration: 2.0, animations: {
+        label.alpha = 0
+      }, completion: { _ in
+        label.removeFromSuperview()
+      })
     }
   }
 
   func showArrow(x: CGFloat, y: CGFloat, image: UIImage, points: [CGPoint], timeOfAnimation: TimeInterval, textLabel: String?) {
     removeArrowButton()
+    if !needShowGuide { return }
+    let point = view.center
+    let width: CGFloat = 100
+    let height = width
     if let textLabel = textLabel {
-      animateGuide.label.setTitle(textLabel, for: .normal)
-      animateGuide.label.alpha = 1
-      view.addSubview(animateGuide.label)
+      titleLabelButton = UIButton(frame: CGRect(x: view.center.x - width * 2, y: point.y - height * 3, width: width * 4, height: 40))
+      titleLabelButton.setTitle(textLabel, for: .normal)
+      titleLabelButton.alpha = 1
+      view.addSubview(titleLabelButton)
     }
     arrowButton = UIButton(frame: CGRect(x: x, y: y, width: 70, height: 70))
     arrowButton.setImage(image, for: .normal)
@@ -413,7 +398,7 @@ extension MainViewController {
     if let arrow = self.arrowButton {
       arrow.removeFromSuperview()
     }
-    if let label = animateGuide.label {
+    if let label = titleLabelButton {
       label.removeFromSuperview()
     }
   }

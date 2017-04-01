@@ -29,13 +29,3 @@ public struct SavePoint {
     self.owner = owner
   }
 }
-
-public struct AnimationGuide {
-  var label: UIButton!
-  var button: UIButton!
-
-  init(){
-    label = UIButton()
-    button = UIButton()
-  }
-}
